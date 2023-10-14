@@ -63,7 +63,7 @@ fn main() {
             }
 
             // Part C
-            unimplemented!();
+            cores[0].allocate_executor(executor);
         } else {
             // Part B
             unimplemented!();
