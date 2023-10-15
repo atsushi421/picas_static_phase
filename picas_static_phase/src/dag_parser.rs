@@ -185,7 +185,17 @@ fn split_dag_into_chains_core(
 
 pub fn parse_dags(dir_path: &str) -> (Vec<RefCell<CallbackGroup>>, Vec<Chain>) {
     let mut current_chain_priority = 0;
-    let mut perception_dag = create_dag_from_yaml(&format!("{dir_path}/perception.yaml"));
 
-    split_dag_into_chains(&mut perception_dag, &mut current_chain_priority)
+    let mut perception_dag = create_dag_from_yaml(&format!("{dir_path}/perception.yaml"));
+    let (mut perception_cbgs, mut perception_chains) =
+        split_dag_into_chains(&mut perception_dag, &mut current_chain_priority);
+
+    let mut sensing_localization_dag =
+        create_dag_from_yaml(&format!("{dir_path}/sensing_localization.yaml"));
+    let (mut sl_cbgs, mut sl_chains) =
+        split_dag_into_chains(&mut sensing_localization_dag, &mut current_chain_priority);
+
+    perception_cbgs.append(&mut sl_cbgs);
+    perception_chains.append(&mut sl_chains);
+    (perception_cbgs, perception_chains)
 }
