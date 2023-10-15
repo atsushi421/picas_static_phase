@@ -115,9 +115,9 @@ fn split_dag_into_chains(
     while dag.node_count() > 0 {
         split_dag_into_chains_core(
             dag,
-            &mut dag.clone(),
-            dag_period,
             current_chain_priority,
+            dag_period,
+            &mut dag.clone(),
             &mut chains,
             &mut callback_groups,
         );
