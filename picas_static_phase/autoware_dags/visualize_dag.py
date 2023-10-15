@@ -42,7 +42,7 @@ def visualize_graph_top_down_more_spacing(yaml_path):
 
     # Add nodes and store wcet as attribute
     for node in perception_data['nodes']:
-        G.add_node(node['id'], wcet=node['wcet'])
+        G.add_node(node['id'], name=node['name'], wcet=node['wcet'])
 
     # Add edges
     for link in perception_data['links']:
@@ -53,7 +53,7 @@ def visualize_graph_top_down_more_spacing(yaml_path):
 
     # Plot the graph
     plt.figure(figsize=(15, 10))
-    labels = {node: f"{node}\n(WCET: {G.nodes[node]['wcet']}ms)" for node in G.nodes()}
+    labels = {node: f"{G.nodes[node]['name']}\n(WCET: {G.nodes[node]['wcet']}ms)" for node in G.nodes()}
     nx.draw(G, pos, labels=labels, node_size=1500, node_color='skyblue', font_size=6, font_weight='bold', width=1.5, edge_color='gray')
     plt.title(f'Top-Down Graph Structure with WCET of {os.path.basename(yaml_path)}')
 

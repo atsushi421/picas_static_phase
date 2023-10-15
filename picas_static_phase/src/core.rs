@@ -26,5 +26,6 @@ impl<'a> Core<'a> {
         for cbg in &executor.borrow().allocated_callback_groups {
             cbg.borrow_mut().set_core_id(self.id);
         }
+        self.allocated_executors.push(executor);
     }
 }
