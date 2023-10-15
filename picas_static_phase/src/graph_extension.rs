@@ -7,9 +7,6 @@ use petgraph::{
 };
 use std::collections::{HashMap, VecDeque};
 
-const DUMMY_SOURCE_NODE_FLAG: i32 = -1;
-const DUMMY_SINK_NODE_FLAG: i32 = -2;
-
 #[derive(Clone)]
 pub struct NodeData {
     pub id: usize,
@@ -43,8 +40,7 @@ pub trait GraphExtension {
     fn update_temp_param(&mut self, node_i: NodeIndex, key: &str, value: i32);
     fn add_dummy_source_node(&mut self) -> NodeIndex;
     fn add_dummy_sink_node(&mut self) -> NodeIndex;
-    fn remove_dummy_source_node(&mut self);
-    fn remove_dummy_sink_node(&mut self);
+    fn remove_dummy_nodes(&mut self);
     fn remove_nodes(&mut self, node_indices: &[NodeIndex]);
     fn calculate_earliest_start_times(&mut self);
     fn calculate_latest_start_times(&mut self);
@@ -62,14 +58,8 @@ impl GraphExtension for Graph<NodeData, i32> {
 
     fn add_dummy_source_node(&mut self) -> NodeIndex {
         let source_nodes = self.get_source_nodes();
-        let dummy_source_i = self.add_node(NodeData::new(
-            self.node_count() as usize,
-            "dummy",
-            "dummy",
-            0,
-            None,
-        ));
-        self.update_temp_param(dummy_source_i, "dummy", DUMMY_SOURCE_NODE_FLAG);
+        let dummy_source_i =
+            self.add_node(NodeData::new(self.node_count(), "dummy", "dummy", 0, None));
 
         for source_i in source_nodes {
             self.add_edge(dummy_source_i, source_i, 0);
@@ -79,43 +69,22 @@ impl GraphExtension for Graph<NodeData, i32> {
 
     fn add_dummy_sink_node(&mut self) -> NodeIndex {
         let sink_nodes = self.get_sink_nodes();
-        let dummy_sink_i = self.add_node(NodeData::new(
-            self.node_count() as usize,
-            "dummy",
-            "dummy",
-            0,
-            None,
-        ));
-        self.update_temp_param(dummy_sink_i, "dummy", DUMMY_SINK_NODE_FLAG);
+        let dummy_sink_i =
+            self.add_node(NodeData::new(self.node_count(), "dummy", "dummy", 0, None));
         for sink_i in sink_nodes {
             self.add_edge(sink_i, dummy_sink_i, 0);
         }
         dummy_sink_i
     }
 
-    fn remove_dummy_source_node(&mut self) {
-        if let Some(dummy_source_node) = self.node_indices().find(|&i| {
-            self[i]
-                .temp_params
-                .get("dummy")
-                .map_or(false, |&v| v == DUMMY_SOURCE_NODE_FLAG)
-        }) {
-            self.remove_node(dummy_source_node);
-        } else {
-            panic!("The dummy source node does not exist.");
-        }
-    }
+    fn remove_dummy_nodes(&mut self) {
+        let dummy_nodes: Vec<_> = self
+            .node_indices()
+            .filter(|&node_i| self[node_i].name == "dummy")
+            .collect();
 
-    fn remove_dummy_sink_node(&mut self) {
-        if let Some(dummy_sink_node) = self.node_indices().find(|&i| {
-            self[i]
-                .temp_params
-                .get("dummy")
-                .map_or(false, |&v| v == DUMMY_SINK_NODE_FLAG)
-        }) {
-            self.remove_node(dummy_sink_node);
-        } else {
-            panic!("The dummy sink node does not exist.");
+        for node_i in dummy_nodes {
+            self.remove_node(node_i);
         }
     }
 
@@ -210,8 +179,7 @@ impl GraphExtension for Graph<NodeData, i32> {
             }
         }
 
-        self.remove_dummy_source_node();
-        self.remove_dummy_sink_node();
+        self.remove_dummy_nodes();
 
         if critical_path.len() > 1 {
             warn!("There are more than one critical paths.");
