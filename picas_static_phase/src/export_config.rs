@@ -2,6 +2,9 @@ use std::{cell::RefCell, collections::HashMap};
 
 use crate::callback_group::CallbackGroup;
 use serde::Serialize;
+use serde_yaml;
+use std::fs::File;
+use std::io::Write;
 
 #[derive(Serialize)]
 struct CBGConfig {
@@ -22,7 +25,7 @@ impl CBGConfig {
     }
 }
 
-pub fn export_config(callback_groups: &[RefCell<CallbackGroup>]) {
+pub fn export_config(output_dir: &str, callback_groups: &[RefCell<CallbackGroup>]) {
     let mut config = HashMap::new();
     let mut callback_group_configs = Vec::new();
     for callback_group in callback_groups {
@@ -31,5 +34,8 @@ pub fn export_config(callback_groups: &[RefCell<CallbackGroup>]) {
     config.insert("callback_groups", callback_group_configs);
 
     let yaml_string = serde_yaml::to_string(&config).unwrap();
-    println!("{}", yaml_string);
+    let output_path = format!("{}/config.yaml", output_dir);
+    let mut file = File::create(output_path).expect("Unable to create output file");
+    file.write_all(yaml_string.as_bytes())
+        .expect("Unable to write to output file");
 }

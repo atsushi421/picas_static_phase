@@ -39,7 +39,7 @@ pub trait GraphExtension {
     fn update_temp_param(&mut self, node_i: NodeIndex, key: &str, value: i32);
     fn add_dummy_source_node(&mut self) -> NodeIndex;
     fn add_dummy_sink_node(&mut self) -> NodeIndex;
-    fn remove_dummy_node(&mut self);
+    fn remove_dummy_nodes(&mut self);
     fn remove_nodes(&mut self, node_indices: &[NodeIndex]);
     fn calculate_earliest_start_times(&mut self);
     fn calculate_latest_start_times(&mut self);
@@ -56,9 +56,11 @@ impl GraphExtension for Graph<NodeData, i32> {
     }
 
     fn add_dummy_source_node(&mut self) -> NodeIndex {
+        let source_nodes = self.get_source_nodes();
         let dummy_source_i =
             self.add_node(NodeData::new(self.node_count(), "dummy", "dummy", 0, None));
-        for source_i in self.get_source_nodes() {
+
+        for source_i in source_nodes {
             self.add_edge(dummy_source_i, source_i, 0);
         }
         dummy_source_i
@@ -74,13 +76,15 @@ impl GraphExtension for Graph<NodeData, i32> {
         dummy_sink_i
     }
 
-    fn remove_dummy_node(&mut self) {
-        self.remove_nodes(
-            &self
-                .node_indices()
-                .filter(|&i| self[i].name == "dummy")
-                .collect::<Vec<_>>(),
-        );
+    fn remove_dummy_nodes(&mut self) {
+        let dummy_nodes: Vec<_> = self
+            .node_indices()
+            .filter(|&node_i| self[node_i].name == "dummy")
+            .collect();
+
+        for node_i in dummy_nodes {
+            self.remove_node(node_i);
+        }
     }
 
     fn remove_nodes(&mut self, node_indices: &[NodeIndex]) {
@@ -175,7 +179,7 @@ impl GraphExtension for Graph<NodeData, i32> {
             }
         }
 
-        self.remove_dummy_node();
+        self.remove_dummy_nodes();
 
         // Reset the temp_params
         for node in self.node_indices() {
