@@ -9,7 +9,7 @@ use crate::executor::Executor;
 pub fn assign_cb_prio(chains: &mut Vec<Chain>) {
     let mut current_priority: i32 = chains
         .iter()
-        .map(|chain| (chain.regular_callbacks.len() + 1) as i32)
+        .map(|chain| (chain.regular_callbacks.len() + 1) as i32) // +1 for head_timer_callback
         .sum();
 
     chains.sort_by_key(|chain| std::cmp::Reverse(chain.priority));
@@ -28,7 +28,7 @@ pub fn assign_cb_prio(chains: &mut Vec<Chain>) {
     }
 }
 
-pub fn sort_cbgs_by_highest_cp_prio(cbgs: &mut [RefCell<CallbackGroup>]) {
+pub fn sort_cbgs_by_highest_cb_prio(cbgs: &mut [RefCell<CallbackGroup>]) {
     cbgs.sort_by_key(|cbg| {
         cbg.borrow()
             .callbacks
@@ -58,5 +58,5 @@ pub fn sort_cores_by_utilization(cores: &mut [Core]) {
 
 #[allow(unused_variables)]
 pub fn meets_strategy_5_or_6(core: &Core, executor: &RefCell<Executor>) -> bool {
-    true // HACK: Autoware always meets Strategy 5 and 6
+    true // HACK: Autoware always strategies 5 and 6
 }
