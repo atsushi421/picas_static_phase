@@ -13,7 +13,7 @@ use std::cell::RefCell;
 #[clap(name = "PiCAS static phase", version = "1.0", about = "")]
 struct ArgParser {
     /// Path to DAGSet directory.
-    #[clap(short = 'd', long = "dag_dir", default_value = "./autoware_dags")]
+    #[clap(short = 'd', long = "dag_dir", default_value = "../autoware_dags")]
     dag_dir_path: String,
     /// Number of processing cores.
     #[clap(short = 'c', long = "number_of_cores", default_value = "16")]
