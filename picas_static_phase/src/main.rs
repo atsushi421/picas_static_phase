@@ -70,5 +70,5 @@ fn main() {
         }
     }
 
-    export_config(&callback_groups)
+    export_config(&arg.output_dir_path, &callback_groups)
 }
