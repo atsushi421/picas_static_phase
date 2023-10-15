@@ -17,8 +17,8 @@ macro_rules! getset_callback {
 }
 
 pub struct TimerCallback {
-    wcet: i32,
     pub period: i32,
+    wcet: i32,
     priority_within_executor: Option<i32>,
 }
 

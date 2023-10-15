@@ -1,4 +1,3 @@
-use log::warn;
 use petgraph::{
     algo::toposort,
     graph::{Graph, NodeIndex},
@@ -113,6 +112,7 @@ impl GraphExtension for Graph<NodeData, i32> {
             earliest_start_times[node_i.index()] = max_earliest_start_time;
             self.update_temp_param(node_i, "earliest_start_time", max_earliest_start_time);
         }
+
         assert!(
             !earliest_start_times.iter().any(|&time| time < 0),
             "The earliest start times should be non-negative."
@@ -180,10 +180,6 @@ impl GraphExtension for Graph<NodeData, i32> {
         }
 
         self.remove_dummy_nodes();
-
-        if critical_path.len() > 1 {
-            warn!("There are more than one critical paths.");
-        }
 
         // Reset the temp_params
         for node in self.node_indices() {
