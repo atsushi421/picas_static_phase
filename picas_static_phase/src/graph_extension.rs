@@ -1,4 +1,3 @@
-use log::warn;
 use petgraph::{
     algo::toposort,
     graph::{Graph, NodeIndex},
@@ -6,9 +5,6 @@ use petgraph::{
     Direction::{Incoming, Outgoing},
 };
 use std::collections::{HashMap, VecDeque};
-
-const DUMMY_SOURCE_NODE_FLAG: i32 = -1;
-const DUMMY_SINK_NODE_FLAG: i32 = -2;
 
 #[derive(Clone)]
 pub struct NodeData {
@@ -43,8 +39,7 @@ pub trait GraphExtension {
     fn update_temp_param(&mut self, node_i: NodeIndex, key: &str, value: i32);
     fn add_dummy_source_node(&mut self) -> NodeIndex;
     fn add_dummy_sink_node(&mut self) -> NodeIndex;
-    fn remove_dummy_source_node(&mut self);
-    fn remove_dummy_sink_node(&mut self);
+    fn remove_dummy_node(&mut self);
     fn remove_nodes(&mut self, node_indices: &[NodeIndex]);
     fn calculate_earliest_start_times(&mut self);
     fn calculate_latest_start_times(&mut self);
@@ -61,17 +56,9 @@ impl GraphExtension for Graph<NodeData, i32> {
     }
 
     fn add_dummy_source_node(&mut self) -> NodeIndex {
-        let source_nodes = self.get_source_nodes();
-        let dummy_source_i = self.add_node(NodeData::new(
-            self.node_count() as usize,
-            "dummy",
-            "dummy",
-            0,
-            None,
-        ));
-        self.update_temp_param(dummy_source_i, "dummy", DUMMY_SOURCE_NODE_FLAG);
-
-        for source_i in source_nodes {
+        let dummy_source_i =
+            self.add_node(NodeData::new(self.node_count(), "dummy", "dummy", 0, None));
+        for source_i in self.get_source_nodes() {
             self.add_edge(dummy_source_i, source_i, 0);
         }
         dummy_source_i
@@ -79,44 +66,21 @@ impl GraphExtension for Graph<NodeData, i32> {
 
     fn add_dummy_sink_node(&mut self) -> NodeIndex {
         let sink_nodes = self.get_sink_nodes();
-        let dummy_sink_i = self.add_node(NodeData::new(
-            self.node_count() as usize,
-            "dummy",
-            "dummy",
-            0,
-            None,
-        ));
-        self.update_temp_param(dummy_sink_i, "dummy", DUMMY_SINK_NODE_FLAG);
+        let dummy_sink_i =
+            self.add_node(NodeData::new(self.node_count(), "dummy", "dummy", 0, None));
         for sink_i in sink_nodes {
             self.add_edge(sink_i, dummy_sink_i, 0);
         }
         dummy_sink_i
     }
 
-    fn remove_dummy_source_node(&mut self) {
-        if let Some(dummy_source_node) = self.node_indices().find(|&i| {
-            self[i]
-                .temp_params
-                .get("dummy")
-                .map_or(false, |&v| v == DUMMY_SOURCE_NODE_FLAG)
-        }) {
-            self.remove_node(dummy_source_node);
-        } else {
-            panic!("The dummy source node does not exist.");
-        }
-    }
-
-    fn remove_dummy_sink_node(&mut self) {
-        if let Some(dummy_sink_node) = self.node_indices().find(|&i| {
-            self[i]
-                .temp_params
-                .get("dummy")
-                .map_or(false, |&v| v == DUMMY_SINK_NODE_FLAG)
-        }) {
-            self.remove_node(dummy_sink_node);
-        } else {
-            panic!("The dummy sink node does not exist.");
-        }
+    fn remove_dummy_node(&mut self) {
+        self.remove_nodes(
+            &self
+                .node_indices()
+                .filter(|&i| self[i].name == "dummy")
+                .collect::<Vec<_>>(),
+        );
     }
 
     fn remove_nodes(&mut self, node_indices: &[NodeIndex]) {
@@ -144,6 +108,7 @@ impl GraphExtension for Graph<NodeData, i32> {
             earliest_start_times[node_i.index()] = max_earliest_start_time;
             self.update_temp_param(node_i, "earliest_start_time", max_earliest_start_time);
         }
+
         assert!(
             !earliest_start_times.iter().any(|&time| time < 0),
             "The earliest start times should be non-negative."
@@ -210,12 +175,7 @@ impl GraphExtension for Graph<NodeData, i32> {
             }
         }
 
-        self.remove_dummy_source_node();
-        self.remove_dummy_sink_node();
-
-        if critical_path.len() > 1 {
-            warn!("There are more than one critical paths.");
-        }
+        self.remove_dummy_node();
 
         // Reset the temp_params
         for node in self.node_indices() {

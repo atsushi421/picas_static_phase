@@ -81,7 +81,6 @@ fn get_weakly_connected_components(dag: &Graph<NodeData, i32>) -> Vec<Graph<Node
             visited.insert(next);
         }
 
-        // 新しいサブグラフを作成
         let mut subgraph = Graph::<NodeData, i32>::new();
         let mut node_mapping = HashMap::new();
 
@@ -124,34 +123,40 @@ fn split_dag_into_chains(
         );
     }
 
-    let callback_groups: Vec<RefCell<CallbackGroup>> = callback_groups
-        .into_iter()
-        .map(|(id, callbacks)| RefCell::new(CallbackGroup::new(&id, callbacks)))
-        .collect();
-    (callback_groups, chains)
+    (
+        callback_groups
+            .into_iter()
+            .map(|(id, callbacks)| RefCell::new(CallbackGroup::new(&id, callbacks)))
+            .collect(),
+        chains,
+    )
 }
 
 fn split_dag_into_chains_core(
     original_dag: &mut Graph<NodeData, i32>,
-    dag: &mut Graph<NodeData, i32>,
-    dag_period: i32,
     current_chain_priority: &mut i32,
+    dag_period: i32,
+    dag: &mut Graph<NodeData, i32>,
     chains: &mut Vec<Chain>,
     callback_groups: &mut HashMap<String, Vec<Rc<RefCell<dyn Callback>>>>,
 ) {
     let mut regular_callbacks: Vec<Rc<RefCell<RegularCallback>>> = Vec::new();
     let mut critical_path: Vec<NodeIndex> = dag.get_critical_path();
+
+    // Create a timer callback
     let timer_index = critical_path.remove(0);
+    original_dag.remove_node(timer_index);
     let timer_node = dag.node_weight(timer_index).unwrap().clone();
     let timer_callback = Rc::new(RefCell::new(TimerCallback::new(
         timer_node.wcet,
         dag_period,
     )));
-    original_dag.remove_node(timer_index);
     callback_groups
         .entry(timer_node.callback_group_id)
         .or_default()
         .push(timer_callback.clone());
+
+    // Create regular callbacks
     for node_i in critical_path.iter() {
         let node = &dag[*node_i];
         let regular = Rc::new(RefCell::new(RegularCallback::new(node.wcet)));
@@ -161,6 +166,7 @@ fn split_dag_into_chains_core(
             .or_default()
             .push(regular.clone());
     }
+    original_dag.remove_nodes(&critical_path);
 
     chains.push(Chain::new(
         *current_chain_priority,
@@ -168,15 +174,14 @@ fn split_dag_into_chains_core(
         regular_callbacks,
     ));
     *current_chain_priority += 1;
-    original_dag.remove_nodes(&critical_path);
 
     let mut weakly_connected_components = get_weakly_connected_components(original_dag);
     for component in weakly_connected_components.iter_mut() {
         split_dag_into_chains_core(
             original_dag,
-            component,
-            dag_period,
             current_chain_priority,
+            dag_period,
+            component,
             chains,
             callback_groups,
         );
