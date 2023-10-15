@@ -3,7 +3,7 @@
 This tool reproduces the priority and affinity settings of the PiCAS framework [1] using multiple DAGs as input. The results are output in the form of a [ros2_thread_configurator](https://github.com/sykwer/ros2_thread_configurator) configuration file.
 
 ## Input DAG file format
-The input DAG must be in yaml format, as in the [autoware_dag](https://github.com/atsushi421/picas_static_phase/tree/main/autoware_dags) directory.
+The input DAG must be in yaml format, as in the [autoware_dags](https://github.com/atsushi421/picas_static_phase/tree/main/autoware_dags) directory.
 
 ## Usage
 
