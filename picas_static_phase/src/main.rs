@@ -1,6 +1,6 @@
 use clap::Parser;
 use picas_static_phase::core::Core;
-use picas_static_phase::dag_parser::parse_dag;
+use picas_static_phase::dag_parser::parse_dags;
 use picas_static_phase::executor::Executor;
 use picas_static_phase::export_config::export_config;
 use picas_static_phase::picas_helper::{
@@ -13,7 +13,7 @@ use std::cell::RefCell;
 #[clap(name = "PiCAS static phase", version = "1.0", about = "")]
 struct ArgParser {
     /// Path to DAGSet directory.
-    #[clap(short = 'd', long = "dag_dir", default_value = "../dags")]
+    #[clap(short = 'd', long = "dag_dir", default_value = "./autoware_dags")]
     dag_dir_path: String,
     /// Number of processing cores.
     #[clap(short = 'c', long = "number_of_cores", default_value = "16")]
@@ -28,7 +28,7 @@ const MAX_EXECUTORS: usize = 99;
 fn main() {
     let arg: ArgParser = ArgParser::parse();
 
-    let (mut callback_groups, mut chains) = parse_dag();
+    let (mut callback_groups, mut chains) = parse_dags(&arg.dag_dir_path);
     let mut executors = Vec::with_capacity(MAX_EXECUTORS);
     for i in 0..MAX_EXECUTORS {
         executors.push(RefCell::new(Executor::new(i as i32)));
@@ -63,7 +63,7 @@ fn main() {
             }
 
             // Part C
-            unimplemented!();
+            cores[0].allocate_executor(executor);
         } else {
             // Part B
             unimplemented!();

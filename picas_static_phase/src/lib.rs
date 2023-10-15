@@ -5,4 +5,5 @@ pub mod core;
 pub mod dag_parser;
 pub mod executor;
 pub mod export_config;
+pub mod graph_extension;
 pub mod picas_helper;

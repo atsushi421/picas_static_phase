@@ -1,84 +1,196 @@
-use crate::callback::{RegularCallback, TimerCallback};
+use crate::callback::{Callback, RegularCallback, TimerCallback};
 use crate::callback_group::CallbackGroup;
 use crate::chain::Chain;
 use std::cell::RefCell;
+use std::collections::{HashMap, HashSet};
+use std::fs;
 use std::rc::Rc;
 
-pub fn parse_dag() -> (Vec<RefCell<CallbackGroup>>, Vec<Chain>) {
-    // [chain0] timer0 -> regular0 -> regular1
-    let timer0 = Rc::new(RefCell::new(TimerCallback::new(5, 40)));
-    let regular0 = Rc::new(RefCell::new(RegularCallback::new(10)));
-    let regular1 = Rc::new(RefCell::new(RegularCallback::new(10)));
-    let callback_group0 = RefCell::new(CallbackGroup::new("cbg0", vec![timer0.clone()]));
-    let callback_group1 = RefCell::new(CallbackGroup::new(
-        "cbg1",
-        vec![regular0.clone(), regular1.clone()],
-    ));
-    let chain0 = Chain::new(0, timer0.clone(), vec![regular0.clone(), regular1.clone()]);
+use crate::graph_extension::{GraphExtension, NodeData};
 
-    // [chain1] timer1 -> regular2 -> regular3 -> regular4 -> regular5
-    let timer1 = Rc::new(RefCell::new(TimerCallback::new(5, 40)));
-    let regular2 = Rc::new(RefCell::new(RegularCallback::new(15)));
-    let regular3 = Rc::new(RefCell::new(RegularCallback::new(8)));
-    let regular4 = Rc::new(RefCell::new(RegularCallback::new(1)));
-    let regular5 = Rc::new(RefCell::new(RegularCallback::new(4)));
-    let callback_group2 = RefCell::new(CallbackGroup::new("cbg2", vec![timer1.clone()]));
-    let callback_group3 = RefCell::new(CallbackGroup::new(
-        "cbg3",
-        vec![regular2.clone(), regular3.clone()],
-    ));
-    let callback_group4 = RefCell::new(CallbackGroup::new(
-        "cbg4",
-        vec![regular4.clone(), regular5.clone()],
-    ));
-    let chain1 = Chain::new(
-        1,
-        timer1.clone(),
-        vec![
-            regular2.clone(),
-            regular3.clone(),
-            regular4.clone(),
-            regular5.clone(),
-        ],
-    );
+use petgraph::{graph::Graph, prelude::*};
+use yaml_rust::YamlLoader;
 
-    // [chain2] timer2 -> regular6 -> regular7 -> regular8 -> regular9
-    let timer2 = Rc::new(RefCell::new(TimerCallback::new(25, 100)));
-    let regular6 = Rc::new(RefCell::new(RegularCallback::new(6)));
-    let regular7 = Rc::new(RefCell::new(RegularCallback::new(14)));
-    let regular8 = Rc::new(RefCell::new(RegularCallback::new(2)));
-    let regular9 = Rc::new(RefCell::new(RegularCallback::new(9)));
-    let callback_group5 = RefCell::new(CallbackGroup::new("cbg5", vec![timer2.clone()]));
-    let callback_group6 = RefCell::new(CallbackGroup::new(
-        "cbg6",
-        vec![regular6.clone(), regular7.clone()],
-    ));
-    let callback_group7 = RefCell::new(CallbackGroup::new(
-        "cbg7",
-        vec![regular8.clone(), regular9.clone()],
-    ));
-    let chain2 = Chain::new(
-        2,
-        timer2.clone(),
-        vec![
-            regular6.clone(),
-            regular7.clone(),
-            regular8.clone(),
-            regular9.clone(),
-        ],
-    );
+fn load_yaml(file_path: &str) -> Vec<yaml_rust::Yaml> {
+    if !file_path.ends_with(".yaml") && !file_path.ends_with(".yml") {
+        panic!("Invalid file type: {}", file_path);
+    }
+    let file_content = fs::read_to_string(file_path).unwrap();
+    YamlLoader::load_from_str(&file_content).unwrap()
+}
+
+fn create_dag_from_yaml(file_path: &str) -> Graph<NodeData, i32> {
+    let yaml_doc = &load_yaml(file_path)[0];
+    let mut dag = Graph::<NodeData, i32>::new();
+
+    // add nodes to dag
+    for node in yaml_doc["nodes"].as_vec().unwrap() {
+        let mut id = 0;
+        let mut name = "0".to_string();
+        let mut callback_group_id = "0".to_string();
+        let mut wcet = 0;
+        let mut period = None;
+        for (key, value) in node.as_hash().unwrap() {
+            let key_str = key.as_str().unwrap();
+            if key_str == "id" {
+                id = value.as_i64().unwrap() as usize;
+            } else if key_str == "name" {
+                name = value.as_str().unwrap().to_string();
+            } else if key_str == "callback_group_id" {
+                callback_group_id = value.as_str().unwrap().to_string();
+            } else if key_str == "wcet" {
+                wcet = value.as_i64().unwrap() as i32;
+            } else if key_str == "period" {
+                period = Some(value.as_i64().unwrap() as i32);
+            } else {
+                panic!("Invalid key: {}", key_str);
+            }
+        }
+        dag.add_node(NodeData::new(id, &name, &callback_group_id, wcet, period));
+    }
+
+    // add edges to dag
+    for link in yaml_doc["links"].as_vec().unwrap() {
+        let source = link["source"].as_i64().unwrap() as usize;
+        let target = link["target"].as_i64().unwrap() as usize;
+        let dummy_communication_time = 0;
+
+        dag.add_edge(
+            NodeIndex::new(source),
+            NodeIndex::new(target),
+            dummy_communication_time,
+        );
+    }
+    dag
+}
+
+fn get_weakly_connected_components(dag: &Graph<NodeData, i32>) -> Vec<Graph<NodeData, i32>> {
+    let mut visited = HashSet::new();
+    let mut all_components = Vec::new();
+
+    for node in dag.node_indices() {
+        if visited.contains(&node) {
+            continue;
+        }
+
+        let mut dfs = Dfs::new(&dag, node);
+        let mut component_nodes = Vec::new();
+
+        while let Some(next) = dfs.next(&dag) {
+            component_nodes.push(next);
+            visited.insert(next);
+        }
+
+        let mut subgraph = Graph::<NodeData, i32>::new();
+        let mut node_mapping = HashMap::new();
+
+        for &node_idx in &component_nodes {
+            let node_data = dag[node_idx].clone();
+            let new_node = subgraph.add_node(node_data);
+            node_mapping.insert(node_idx, new_node);
+        }
+
+        for &node_idx in &component_nodes {
+            for edge in dag.edges(node_idx) {
+                let source = node_mapping[&edge.source()];
+                let target = node_mapping[&edge.target()];
+                subgraph.add_edge(source, target, 0);
+            }
+        }
+
+        all_components.push(subgraph);
+    }
+
+    all_components
+}
+
+fn split_dag_into_chains(
+    dag: &mut Graph<NodeData, i32>,
+    current_chain_priority: &mut i32,
+) -> (Vec<RefCell<CallbackGroup>>, Vec<Chain>) {
+    let dag_period = dag.get_head_period().unwrap();
+    let mut chains: Vec<Chain> = Vec::new();
+    let mut callback_groups: HashMap<String, Vec<Rc<RefCell<dyn Callback>>>> = HashMap::new();
+
+    while dag.node_count() > 0 {
+        split_dag_into_chains_core(
+            dag,
+            &mut dag.clone(),
+            dag_period,
+            current_chain_priority,
+            &mut chains,
+            &mut callback_groups,
+        );
+    }
 
     (
-        vec![
-            callback_group0,
-            callback_group1,
-            callback_group2,
-            callback_group3,
-            callback_group4,
-            callback_group5,
-            callback_group6,
-            callback_group7,
-        ],
-        vec![chain0, chain1, chain2],
+        callback_groups
+            .into_iter()
+            .map(|(id, callbacks)| RefCell::new(CallbackGroup::new(&id, callbacks)))
+            .collect(),
+        chains,
     )
+}
+
+fn split_dag_into_chains_core(
+    original_dag: &mut Graph<NodeData, i32>,
+    current_chain_priority: &mut i32,
+    dag_period: i32,
+    dag: &mut Graph<NodeData, i32>,
+    chains: &mut Vec<Chain>,
+    callback_groups: &mut HashMap<String, Vec<Rc<RefCell<dyn Callback>>>>,
+) {
+    let mut regular_callbacks: Vec<Rc<RefCell<RegularCallback>>> = Vec::new();
+    let mut critical_path: Vec<NodeIndex> = dag.get_critical_path();
+
+    // Create a timer callback
+    let timer_index = critical_path.remove(0);
+    original_dag.remove_node(timer_index);
+    let timer_node = dag.node_weight(timer_index).unwrap().clone();
+    let timer_callback = Rc::new(RefCell::new(TimerCallback::new(
+        timer_node.wcet,
+        dag_period,
+    )));
+    callback_groups
+        .entry(timer_node.callback_group_id)
+        .or_default()
+        .push(timer_callback.clone());
+
+    // Create regular callbacks
+    for node_i in critical_path.iter() {
+        let node = &dag[*node_i];
+        let regular = Rc::new(RefCell::new(RegularCallback::new(node.wcet)));
+        regular_callbacks.push(regular.clone());
+        callback_groups
+            .entry(node.callback_group_id.clone())
+            .or_default()
+            .push(regular.clone());
+    }
+    original_dag.remove_nodes(&critical_path);
+
+    chains.push(Chain::new(
+        *current_chain_priority,
+        timer_callback.clone(),
+        regular_callbacks,
+    ));
+    *current_chain_priority += 1;
+
+    let mut weakly_connected_components = get_weakly_connected_components(original_dag);
+    for component in weakly_connected_components.iter_mut() {
+        split_dag_into_chains_core(
+            original_dag,
+            current_chain_priority,
+            dag_period,
+            component,
+            chains,
+            callback_groups,
+        );
+    }
+}
+
+pub fn parse_dags(dir_path: &str) -> (Vec<RefCell<CallbackGroup>>, Vec<Chain>) {
+    let mut current_chain_priority = 0;
+    let mut perception_dag = create_dag_from_yaml(&format!("{dir_path}/perception.yaml"));
+
+    split_dag_into_chains(&mut perception_dag, &mut current_chain_priority)
 }

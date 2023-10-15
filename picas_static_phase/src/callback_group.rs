@@ -5,8 +5,8 @@ use crate::callback::Callback;
 pub struct CallbackGroup {
     pub id: String,
     pub callbacks: Vec<Rc<RefCell<dyn Callback>>>,
-    pub executor_priority: Option<i32>,
-    pub core_id: Option<usize>,
+    executor_priority: Option<i32>,
+    core_id: Option<usize>,
 }
 
 impl CallbackGroup {

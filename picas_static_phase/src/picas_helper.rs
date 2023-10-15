@@ -58,5 +58,5 @@ pub fn sort_cores_by_utilization(cores: &mut [Core]) {
 
 #[allow(unused_variables)]
 pub fn meets_strategy_5_or_6(core: &Core, executor: &RefCell<Executor>) -> bool {
-    true // Autoware always meets Strategy 5 and 6
+    true // HACK: Autoware always meets Strategy 5 and 6
 }
