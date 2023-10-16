@@ -188,12 +188,16 @@ fn split_dag_into_chains_core(
     ));
     *current_chain_priority += 1;
 
-    for subgraph in get_weakly_connected_graphs(original_dag).iter_mut() {
+    let mut subgraphs = get_weakly_connected_graphs(original_dag);
+    if let Some(max_subgraph) = subgraphs
+        .iter_mut()
+        .max_by_key(|subgraph| subgraph.node_count())
+    {
         split_dag_into_chains_core(
             original_dag,
             current_chain_priority,
             dag_period,
-            subgraph,
+            max_subgraph,
             chains,
             callback_groups,
         );
