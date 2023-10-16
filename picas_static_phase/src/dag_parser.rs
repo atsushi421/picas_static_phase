@@ -26,24 +26,19 @@ fn create_dag_from_yaml(file_path: &str) -> Graph<NodeData, i32> {
     // add nodes to dag
     for node in yaml_doc["nodes"].as_vec().unwrap() {
         let mut id = 0;
-        let mut name = "0".to_string();
         let mut callback_group_id = "0".to_string();
+        let mut name = "0".to_string();
         let mut wcet = 0;
         let mut period = None;
+
         for (key, value) in node.as_hash().unwrap() {
-            let key_str = key.as_str().unwrap();
-            if key_str == "id" {
-                id = value.as_i64().unwrap() as usize;
-            } else if key_str == "name" {
-                name = value.as_str().unwrap().to_string();
-            } else if key_str == "callback_group_id" {
-                callback_group_id = value.as_str().unwrap().to_string();
-            } else if key_str == "wcet" {
-                wcet = value.as_i64().unwrap() as i32;
-            } else if key_str == "period" {
-                period = Some(value.as_i64().unwrap() as i32);
-            } else {
-                panic!("Invalid key: {}", key_str);
+            match key.as_str().unwrap() {
+                "id" => id = value.as_i64().unwrap() as usize,
+                "callback_group_id" => callback_group_id = value.as_str().unwrap().to_string(),
+                "name" => name = value.as_str().unwrap().to_string(),
+                "wcet" => wcet = value.as_i64().unwrap() as i32,
+                "period" => period = Some(value.as_i64().unwrap() as i32),
+                _ => unreachable!(),
             }
         }
         dag.add_node(NodeData::new(id, &name, &callback_group_id, wcet, period));
@@ -53,34 +48,48 @@ fn create_dag_from_yaml(file_path: &str) -> Graph<NodeData, i32> {
     for link in yaml_doc["links"].as_vec().unwrap() {
         let source = link["source"].as_i64().unwrap() as usize;
         let target = link["target"].as_i64().unwrap() as usize;
-        let dummy_communication_time = 0;
-
-        dag.add_edge(
-            NodeIndex::new(source),
-            NodeIndex::new(target),
-            dummy_communication_time,
-        );
+        dag.add_edge(NodeIndex::new(source), NodeIndex::new(target), 0);
     }
     dag
 }
 
-fn get_weakly_connected_components(dag: &Graph<NodeData, i32>) -> Vec<Graph<NodeData, i32>> {
+fn get_weakly_connected_graphs(dag: &Graph<NodeData, i32>) -> Vec<Graph<NodeData, i32>> {
     let mut visited = HashSet::new();
-    let mut all_components = Vec::new();
+    let mut components_nodes: HashMap<NodeIndex, Vec<NodeIndex>> = HashMap::new(); // start node index -> component index
 
-    for node in dag.node_indices() {
-        if visited.contains(&node) {
+    for start_node in dag.node_indices() {
+        if visited.contains(&start_node) {
             continue;
         }
 
-        let mut dfs = Dfs::new(&dag, node);
-        let mut component_nodes = Vec::new();
-
+        let mut dfs = Dfs::new(&dag, start_node);
+        let mut merge_target = None;
         while let Some(next) = dfs.next(&dag) {
-            component_nodes.push(next);
-            visited.insert(next);
+            if visited.insert(next) {
+                components_nodes.entry(start_node).or_default().push(next);
+            } else {
+                merge_target = Some(next);
+            }
         }
 
+        if let Some(merge_target) = merge_target {
+            let key_node = components_nodes
+                .iter()
+                .find(|(_, component_nodes)| component_nodes.contains(&merge_target))
+                .map(|(key_node, _)| *key_node)
+                .unwrap();
+
+            for node_idx in components_nodes.remove(&key_node).unwrap() {
+                components_nodes
+                    .entry(start_node)
+                    .or_default()
+                    .push(node_idx);
+            }
+        }
+    }
+
+    let mut all_components = Vec::new();
+    for (_, component_nodes) in components_nodes {
         let mut subgraph = Graph::<NodeData, i32>::new();
         let mut node_mapping = HashMap::new();
 
@@ -168,6 +177,7 @@ fn split_dag_into_chains_core(
     }
     original_dag.remove_nodes(&critical_path);
 
+    // Create a chain
     chains.push(Chain::new(
         *current_chain_priority,
         timer_callback.clone(),
@@ -175,13 +185,12 @@ fn split_dag_into_chains_core(
     ));
     *current_chain_priority += 1;
 
-    let mut weakly_connected_components = get_weakly_connected_components(original_dag);
-    for component in weakly_connected_components.iter_mut() {
+    for subgraph in get_weakly_connected_graphs(original_dag).iter_mut() {
         split_dag_into_chains_core(
             original_dag,
             current_chain_priority,
             dag_period,
-            component,
+            subgraph,
             chains,
             callback_groups,
         );
@@ -191,6 +200,7 @@ fn split_dag_into_chains_core(
 pub fn parse_dags(dir_path: &str) -> (Vec<RefCell<CallbackGroup>>, Vec<Chain>) {
     let mut current_chain_priority = 0;
 
+    // Perception has a higher priority than sensing and localization because it is positioned later.
     let mut perception_dag = create_dag_from_yaml(&format!("{dir_path}/perception.yaml"));
     let (mut perception_cbgs, mut perception_chains) =
         split_dag_into_chains(&mut perception_dag, &mut current_chain_priority);
@@ -203,4 +213,129 @@ pub fn parse_dags(dir_path: &str) -> (Vec<RefCell<CallbackGroup>>, Vec<Chain>) {
     perception_cbgs.append(&mut sl_cbgs);
     perception_chains.append(&mut sl_chains);
     (perception_cbgs, perception_chains)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct DAGCreator {
+        dag: Graph<NodeData, i32>,
+        current_node_id: usize,
+    }
+
+    impl DAGCreator {
+        fn new() -> Self {
+            DAGCreator {
+                dag: Graph::<NodeData, i32>::new(),
+                current_node_id: 0,
+            }
+        }
+
+        fn add_node(&mut self) -> NodeIndex {
+            let node = NodeData::new(
+                self.current_node_id,
+                &self.current_node_id.to_string(),
+                "0",
+                1,
+                None,
+            );
+            self.current_node_id += 1;
+            self.dag.add_node(node)
+        }
+
+        fn add_edge(&mut self, source: NodeIndex, target: NodeIndex) {
+            self.dag.add_edge(source, target, 0);
+        }
+
+        fn get_dag(&self) -> &Graph<NodeData, i32> {
+            &self.dag
+        }
+    }
+
+    #[test]
+    fn test_get_weakly_connected_graphs_one_node() {
+        let mut dag_creator = DAGCreator::new();
+        dag_creator.add_node();
+
+        let components = get_weakly_connected_graphs(dag_creator.get_dag());
+        assert_eq!(components.len(), 1);
+    }
+
+    #[test]
+    fn test_get_weakly_connected_graphs_two_node() {
+        let mut dag_creator = DAGCreator::new();
+        dag_creator.add_node();
+        dag_creator.add_node();
+
+        let components = get_weakly_connected_graphs(dag_creator.get_dag());
+        assert_eq!(components.len(), 2);
+    }
+
+    #[test]
+    fn test_get_weakly_connected_graphs_one_path() {
+        let mut dag_creator = DAGCreator::new();
+        let v0 = dag_creator.add_node();
+        let v1 = dag_creator.add_node();
+        dag_creator.add_edge(v0, v1);
+
+        let components = get_weakly_connected_graphs(dag_creator.get_dag());
+        assert_eq!(components.len(), 1);
+    }
+
+    #[test]
+    fn test_get_weakly_connected_graphs_two_path() {
+        let mut dag_creator = DAGCreator::new();
+        let v0 = dag_creator.add_node();
+        let v1 = dag_creator.add_node();
+        let v2 = dag_creator.add_node();
+        let v3 = dag_creator.add_node();
+        dag_creator.add_edge(v0, v1);
+        dag_creator.add_edge(v2, v3);
+
+        let components = get_weakly_connected_graphs(dag_creator.get_dag());
+        assert_eq!(components.len(), 2);
+    }
+
+    #[test]
+    fn test_get_weakly_connected_graphs_branch() {
+        let mut dag_creator = DAGCreator::new();
+        let v0 = dag_creator.add_node();
+        let v1 = dag_creator.add_node();
+        let v2 = dag_creator.add_node();
+        dag_creator.add_edge(v0, v1);
+        dag_creator.add_edge(v0, v2);
+
+        let components = get_weakly_connected_graphs(dag_creator.get_dag());
+        assert_eq!(components.len(), 1);
+    }
+
+    #[test]
+    fn test_get_weakly_connected_graphs_merge() {
+        let mut dag_creator = DAGCreator::new();
+        let v0 = dag_creator.add_node();
+        let v1 = dag_creator.add_node();
+        let v2 = dag_creator.add_node();
+        dag_creator.add_edge(v0, v2);
+        dag_creator.add_edge(v1, v2);
+
+        let components = get_weakly_connected_graphs(dag_creator.get_dag());
+        assert_eq!(components.len(), 1);
+    }
+
+    #[test]
+    fn test_get_weakly_connected_graphs_branch_and_merge() {
+        let mut dag_creator = DAGCreator::new();
+        let v0 = dag_creator.add_node();
+        let v1 = dag_creator.add_node();
+        let v2 = dag_creator.add_node();
+        let v3 = dag_creator.add_node();
+        dag_creator.add_edge(v0, v1);
+        dag_creator.add_edge(v0, v2);
+        dag_creator.add_edge(v1, v3);
+        dag_creator.add_edge(v2, v3);
+
+        let components = get_weakly_connected_graphs(dag_creator.get_dag());
+        assert_eq!(components.len(), 1);
+    }
 }

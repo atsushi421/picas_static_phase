@@ -5,7 +5,7 @@ use picas_static_phase::executor::Executor;
 use picas_static_phase::export_config::export_config;
 use picas_static_phase::picas_helper::{
     assign_cb_prio, find_highest_prio_empty_executor, meets_strategy_5_or_6,
-    sort_cbgs_by_highest_cp_prio, sort_cores_by_utilization,
+    sort_cbgs_by_highest_cb_prio, sort_cores_by_utilization,
 };
 use std::cell::RefCell;
 
@@ -33,14 +33,14 @@ fn main() {
     for i in 0..MAX_EXECUTORS {
         executors.push(RefCell::new(Executor::new(i as i32)));
     }
-    let mut cores = Vec::new();
+    let mut cores = Vec::with_capacity(arg.number_of_cores);
     for i in 0..arg.number_of_cores {
         cores.push(Core::new(i));
     }
 
     // Starting PiCAS framework.
     assign_cb_prio(&mut chains);
-    sort_cbgs_by_highest_cp_prio(&mut callback_groups);
+    sort_cbgs_by_highest_cb_prio(&mut callback_groups);
 
     'outer: for callback_group in &callback_groups {
         if let Some(executor_i) = find_highest_prio_empty_executor(&executors) {
@@ -57,16 +57,17 @@ fn main() {
                         core.allocate_executor(executor);
                         continue 'outer;
                     } else {
-                        unreachable!(); // Autoware always meets Strategy 5 and 6
+                        unreachable!(); // Autoware always meets strategies 5 and 6
                     }
                 }
             }
 
             // Part C
             cores[0].allocate_executor(executor);
+            // All cores meet strategies 5 and 6, so there is no need to merge executors.
         } else {
             // Part B
-            unimplemented!();
+            unimplemented!(); // Part B is only reached if more than 99 executors are required.
         }
     }
 

@@ -27,15 +27,16 @@ impl CBGConfig {
 
 pub fn export_config(output_dir: &str, callback_groups: &[RefCell<CallbackGroup>]) {
     let mut config = HashMap::new();
-    let mut callback_group_configs = Vec::new();
+    let mut callback_group_configs = Vec::with_capacity(callback_groups.len());
     for callback_group in callback_groups {
         callback_group_configs.push(CBGConfig::new(callback_group));
     }
     config.insert("callback_groups", callback_group_configs);
 
+    let mut config_file =
+        File::create(format!("{output_dir}/config.yaml")).expect("Failed to create output file");
     let yaml_string = serde_yaml::to_string(&config).unwrap();
-    let output_path = format!("{}/config.yaml", output_dir);
-    let mut file = File::create(output_path).expect("Unable to create output file");
-    file.write_all(yaml_string.as_bytes())
-        .expect("Unable to write to output file");
+    config_file
+        .write_all(yaml_string.as_bytes())
+        .expect("Failed to write to output file");
 }

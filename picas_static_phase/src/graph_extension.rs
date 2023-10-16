@@ -9,8 +9,8 @@ use std::collections::{HashMap, VecDeque};
 #[derive(Clone)]
 pub struct NodeData {
     pub id: usize,
-    pub name: String,
     pub callback_group_id: String,
+    pub name: String,
     pub wcet: i32,
     pub period: Option<i32>,
     pub temp_params: HashMap<String, i32>,
@@ -26,8 +26,8 @@ impl NodeData {
     ) -> Self {
         NodeData {
             id,
-            name: name.to_string(),
             callback_group_id: callback_group_id.to_string(),
+            name: name.to_string(),
             wcet,
             period,
             temp_params: HashMap::new(),
@@ -36,7 +36,7 @@ impl NodeData {
 }
 
 pub trait GraphExtension {
-    fn update_temp_param(&mut self, node_i: NodeIndex, key: &str, value: i32);
+    fn add_or_update_temp_param(&mut self, node_i: NodeIndex, key: &str, value: i32);
     fn add_dummy_source_node(&mut self) -> NodeIndex;
     fn add_dummy_sink_node(&mut self) -> NodeIndex;
     fn remove_dummy_nodes(&mut self);
@@ -50,7 +50,7 @@ pub trait GraphExtension {
 }
 
 impl GraphExtension for Graph<NodeData, i32> {
-    fn update_temp_param(&mut self, node_i: NodeIndex, key: &str, value: i32) {
+    fn add_or_update_temp_param(&mut self, node_i: NodeIndex, key: &str, value: i32) {
         let target_node = self.node_weight_mut(node_i).unwrap();
         target_node.temp_params.insert(key.to_string(), value);
     }
@@ -70,6 +70,7 @@ impl GraphExtension for Graph<NodeData, i32> {
         let sink_nodes = self.get_sink_nodes();
         let dummy_sink_i =
             self.add_node(NodeData::new(self.node_count(), "dummy", "dummy", 0, None));
+
         for sink_i in sink_nodes {
             self.add_edge(sink_i, dummy_sink_i, 0);
         }
@@ -93,24 +94,20 @@ impl GraphExtension for Graph<NodeData, i32> {
         }
     }
 
-    /// Calculate the earliest start times for each node in the DAG.
     fn calculate_earliest_start_times(&mut self) {
         let mut earliest_start_times = vec![0; self.node_count()];
-
-        let sorted_nodes = toposort(&*self, None).unwrap();
-        for node_i in sorted_nodes {
+        for node_i in toposort(&*self, None).unwrap() {
             let max_earliest_start_time = self
                 .edges_directed(node_i, Incoming)
                 .map(|edge| {
                     let source_node = edge.source();
-                    let exe_time = self[source_node].wcet;
-                    earliest_start_times[source_node.index()] + exe_time
+                    earliest_start_times[source_node.index()] + self[source_node].wcet
                 })
                 .max_by(|a, b| a.partial_cmp(b).unwrap())
                 .unwrap_or(0);
 
             earliest_start_times[node_i.index()] = max_earliest_start_time;
-            self.update_temp_param(node_i, "earliest_start_time", max_earliest_start_time);
+            self.add_or_update_temp_param(node_i, "earliest_start_time", max_earliest_start_time);
         }
 
         assert!(
@@ -119,28 +116,23 @@ impl GraphExtension for Graph<NodeData, i32> {
         );
     }
 
-    /// Calculate the latest start times for each node in the DAG.
     fn calculate_latest_start_times(&mut self) {
         self.calculate_earliest_start_times();
-        let sorted_nodes = toposort(&*self, None).unwrap();
-        let mut latest_start_times = vec![i32::MAX; self.node_count()];
-        let sink_node_index = self.get_sink_nodes();
-        latest_start_times[sink_node_index[0].index()] =
-            self[sink_node_index[0]].temp_params["earliest_start_time"];
 
-        for &node_i in sorted_nodes.iter().rev() {
+        let mut latest_start_times = vec![i32::MAX; self.node_count()];
+        let sink_node_i = self.get_sink_nodes()[0];
+        latest_start_times[sink_node_i.index()] =
+            self[sink_node_i].temp_params["earliest_start_time"];
+
+        for &node_i in toposort(&*self, None).unwrap().iter().rev() {
             let min_latest_start_time = self
                 .edges_directed(node_i, Outgoing)
-                .map(|edge| {
-                    let target_node = edge.target();
-                    let pre_exe_time = self[node_i].wcet;
-                    latest_start_times[target_node.index()] - pre_exe_time
-                })
+                .map(|edge| latest_start_times[edge.target().index()] - self[node_i].wcet)
                 .min_by(|a, b| a.partial_cmp(b).unwrap())
-                .unwrap_or(self[sink_node_index[0]].temp_params["earliest_start_time"]);
+                .unwrap_or(self[sink_node_i].temp_params["earliest_start_time"]);
 
             latest_start_times[node_i.index()] = min_latest_start_time;
-            self.update_temp_param(node_i, "latest_start_time", min_latest_start_time);
+            self.add_or_update_temp_param(node_i, "latest_start_time", min_latest_start_time);
         }
 
         assert!(
@@ -152,19 +144,19 @@ impl GraphExtension for Graph<NodeData, i32> {
     fn get_critical_path(&mut self) -> Vec<NodeIndex> {
         self.add_dummy_sink_node();
         let start_node = self.add_dummy_source_node();
-        self.calculate_earliest_start_times();
+
         self.calculate_latest_start_times();
-        let mut path_search_queue = VecDeque::new();
-        path_search_queue.push_back((start_node, vec![start_node]));
-        let mut critical_path = Vec::new();
 
-        while let Some((node, mut current_critical_path)) = path_search_queue.pop_front() {
+        let mut search_queue = VecDeque::new();
+        search_queue.push_back((start_node, vec![start_node]));
+        let mut critical_paths = Vec::new();
+
+        while let Some((node, mut current_critical_path)) = search_queue.pop_front() {
             let outgoing_edges: Vec<_> = self.edges_directed(node, Outgoing).collect();
-
             if outgoing_edges.is_empty() {
                 current_critical_path.pop(); // Remove the dummy sink node
                 current_critical_path.remove(0); // Remove the dummy source node
-                critical_path.push(current_critical_path);
+                critical_paths.push(current_critical_path);
             } else {
                 for edge in outgoing_edges {
                     let target_node = edge.target();
@@ -173,20 +165,18 @@ impl GraphExtension for Graph<NodeData, i32> {
                     {
                         let mut new_critical_path = current_critical_path.clone();
                         new_critical_path.push(target_node);
-                        path_search_queue.push_back((target_node, new_critical_path));
+                        search_queue.push_back((target_node, new_critical_path));
                     }
                 }
             }
         }
 
         self.remove_dummy_nodes();
-
-        // Reset the temp_params
         for node in self.node_indices() {
             self[node].temp_params.clear();
         }
 
-        critical_path[0].clone()
+        critical_paths[0].clone()
     }
 
     fn get_source_nodes(&self) -> Vec<NodeIndex> {
