@@ -153,31 +153,30 @@ fn split_dag_into_chains_core(
     callback_groups: &mut HashMap<String, Vec<Rc<RefCell<dyn Callback>>>>,
 ) {
     let mut regular_callbacks: Vec<Rc<RefCell<RegularCallback>>> = Vec::new();
-    let mut critical_path: Vec<NodeIndex> = dag.get_critical_path();
+    let critical_path = dag.get_critical_path();
 
     // Create a timer callback
-    let timer_index = critical_path.remove(0);
-    original_dag.remove_node(timer_index);
-    let timer_node = dag.node_weight(timer_index).unwrap().clone();
+    let timer_node = critical_path[0];
     let timer_callback = Rc::new(RefCell::new(TimerCallback::new(
         &timer_node.name,
         timer_node.wcet,
         dag_period,
     )));
     callback_groups
-        .entry(timer_node.callback_group_id)
+        .entry(timer_node.callback_group_id.clone())
         .or_default()
         .push(timer_callback.clone());
 
-    // Create regular callbacks
-    for node_i in critical_path.iter() {
-        let node = &dag[*node_i];
-        let regular = Rc::new(RefCell::new(RegularCallback::new(&node.name, node.wcet)));
-        regular_callbacks.push(regular.clone());
-        callback_groups
-            .entry(node.callback_group_id.clone())
-            .or_default()
-            .push(regular.clone());
+    if critical_path.len() > 1 {
+        // Create regular callbacks
+        for node in critical_path[1..].iter() {
+            let regular = Rc::new(RefCell::new(RegularCallback::new(&node.name, node.wcet)));
+            regular_callbacks.push(regular.clone());
+            callback_groups
+                .entry(node.callback_group_id.clone())
+                .or_default()
+                .push(regular.clone());
+        }
     }
     original_dag.remove_nodes(&critical_path);
 
@@ -286,7 +285,7 @@ mod tests {
                 &self.current_node_id.to_string(),
                 "0",
                 1,
-                None,
+                Some(100),
             );
             self.current_node_id += 1;
             self.dag.add_node(node)
@@ -299,6 +298,108 @@ mod tests {
         fn get_dag(&self) -> &Graph<NodeData, i32> {
             &self.dag
         }
+    }
+
+    #[test]
+    fn test_split_dag_into_chains_one_node() {
+        let mut dag_creator = DAGCreator::new();
+        dag_creator.add_node();
+
+        let mut current_chain_priority = 0;
+        let (_, chains) = split_dag_into_chains(
+            &mut dag_creator.get_dag().clone(),
+            &mut current_chain_priority,
+        );
+
+        assert_eq!(chains.len(), 1);
+        assert_eq!(chains[0].head_timer_callback.borrow().name, "0");
+        assert_eq!(chains[0].regular_callbacks.len(), 0);
+    }
+
+    #[test]
+    fn test_split_dag_into_chains_one_path() {
+        let mut dag_creator = DAGCreator::new();
+        let v0 = dag_creator.add_node();
+        let v1 = dag_creator.add_node();
+        dag_creator.add_edge(v0, v1);
+
+        let mut current_chain_priority = 0;
+        let (_, chains) = split_dag_into_chains(
+            &mut dag_creator.get_dag().clone(),
+            &mut current_chain_priority,
+        );
+
+        assert_eq!(chains.len(), 1);
+        assert_eq!(chains[0].head_timer_callback.borrow().name, "0");
+        assert_eq!(chains[0].regular_callbacks.len(), 1);
+    }
+
+    #[test]
+    fn test_split_dag_into_chains_branch() {
+        let mut dag_creator = DAGCreator::new();
+        let v0 = dag_creator.add_node();
+        let v1 = dag_creator.add_node();
+        let v2 = dag_creator.add_node();
+        let v3 = dag_creator.add_node();
+        let v4 = dag_creator.add_node();
+        dag_creator.add_edge(v0, v1);
+        dag_creator.add_edge(v1, v2);
+        dag_creator.add_edge(v0, v3);
+        dag_creator.add_edge(v3, v4);
+
+        let mut current_chain_priority = 0;
+        let (_, chains) = split_dag_into_chains(
+            &mut dag_creator.get_dag().clone(),
+            &mut current_chain_priority,
+        );
+
+        assert_eq!(chains.len(), 2);
+        assert_eq!(chains[0].head_timer_callback.borrow().name, "0");
+        assert_eq!(chains[0].regular_callbacks.len(), 2);
+        assert_eq!(chains[1].regular_callbacks.len(), 1);
+    }
+
+    #[test]
+    fn test_split_dag_into_chains_merge() {
+        let mut dag_creator = DAGCreator::new();
+        let v0 = dag_creator.add_node();
+        let v1 = dag_creator.add_node();
+        let v2 = dag_creator.add_node();
+        dag_creator.add_edge(v0, v2);
+        dag_creator.add_edge(v1, v2);
+
+        let mut current_chain_priority = 0;
+        let (_, chains) = split_dag_into_chains(
+            &mut dag_creator.get_dag().clone(),
+            &mut current_chain_priority,
+        );
+
+        assert_eq!(chains.len(), 2);
+        assert_eq!(chains[0].regular_callbacks.len(), 1);
+        assert_eq!(chains[1].regular_callbacks.len(), 0);
+    }
+
+    #[test]
+    fn test_split_dag_into_chains_branch_and_merge() {
+        let mut dag_creator = DAGCreator::new();
+        let v0 = dag_creator.add_node();
+        let v1 = dag_creator.add_node();
+        let v2 = dag_creator.add_node();
+        let v3 = dag_creator.add_node();
+        dag_creator.add_edge(v0, v1);
+        dag_creator.add_edge(v0, v2);
+        dag_creator.add_edge(v1, v3);
+        dag_creator.add_edge(v2, v3);
+
+        let mut current_chain_priority = 0;
+        let (_, chains) = split_dag_into_chains(
+            &mut dag_creator.get_dag().clone(),
+            &mut current_chain_priority,
+        );
+
+        assert_eq!(chains.len(), 2);
+        assert_eq!(chains[0].regular_callbacks.len(), 2);
+        assert_eq!(chains[1].regular_callbacks.len(), 0);
     }
 
     #[test]

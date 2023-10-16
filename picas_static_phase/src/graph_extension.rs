@@ -40,10 +40,10 @@ pub trait GraphExtension {
     fn add_dummy_source_node(&mut self) -> NodeIndex;
     fn add_dummy_sink_node(&mut self) -> NodeIndex;
     fn remove_dummy_nodes(&mut self);
-    fn remove_nodes(&mut self, node_indices: &[NodeIndex]);
+    fn remove_nodes(&mut self, node_indices: &[&NodeData]);
     fn calculate_earliest_start_times(&mut self);
     fn calculate_latest_start_times(&mut self);
-    fn get_critical_path(&mut self) -> Vec<NodeIndex>;
+    fn get_critical_path(&mut self) -> Vec<&NodeData>;
     fn get_source_nodes(&self) -> Vec<NodeIndex>;
     fn get_sink_nodes(&self) -> Vec<NodeIndex>;
     fn get_head_period(&self) -> Option<i32>;
@@ -88,9 +88,13 @@ impl GraphExtension for Graph<NodeData, i32> {
         }
     }
 
-    fn remove_nodes(&mut self, node_indices: &[NodeIndex]) {
-        for node_i in node_indices.iter().rev() {
-            self.remove_node(*node_i);
+    fn remove_nodes(&mut self, nodes: &[&NodeData]) {
+        for node in nodes.iter().rev() {
+            let node_i = self
+                .node_indices()
+                .find(|&node_i| self[node_i].id == node.id)
+                .unwrap();
+            self.remove_node(node_i);
         }
     }
 
@@ -141,7 +145,7 @@ impl GraphExtension for Graph<NodeData, i32> {
         );
     }
 
-    fn get_critical_path(&mut self) -> Vec<NodeIndex> {
+    fn get_critical_path(&mut self) -> Vec<&NodeData> {
         self.add_dummy_sink_node();
         let start_node = self.add_dummy_source_node();
 
@@ -176,7 +180,10 @@ impl GraphExtension for Graph<NodeData, i32> {
             self[node].temp_params.clear();
         }
 
-        critical_paths[0].clone()
+        critical_paths[0]
+            .iter()
+            .map(|&node| self.node_weight(node).unwrap())
+            .collect()
     }
 
     fn get_source_nodes(&self) -> Vec<NodeIndex> {
