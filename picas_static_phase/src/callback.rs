@@ -17,6 +17,7 @@ macro_rules! getset_callback {
 }
 
 pub struct TimerCallback {
+    pub name: String,
     pub period: i32,
     wcet: i32,
     priority_within_executor: Option<i32>,
@@ -31,8 +32,9 @@ impl Callback for TimerCallback {
 }
 
 impl TimerCallback {
-    pub fn new(wcet: i32, period: i32) -> Self {
+    pub fn new(name: &str, wcet: i32, period: i32) -> Self {
         Self {
+            name: name.to_string(),
             wcet,
             period,
             priority_within_executor: None,
@@ -41,6 +43,7 @@ impl TimerCallback {
 }
 
 pub struct RegularCallback {
+    pub name: String,
     wcet: i32,
     assumed_period: Option<i32>,
     priority_within_executor: Option<i32>,
@@ -55,8 +58,9 @@ impl Callback for RegularCallback {
 }
 
 impl RegularCallback {
-    pub fn new(wcet: i32) -> Self {
+    pub fn new(name: &str, wcet: i32) -> Self {
         Self {
+            name: name.to_string(),
             wcet,
             assumed_period: None,
             priority_within_executor: None,

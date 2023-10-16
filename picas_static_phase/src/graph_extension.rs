@@ -6,7 +6,7 @@ use petgraph::{
 };
 use std::collections::{HashMap, VecDeque};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NodeData {
     pub id: usize,
     pub callback_group_id: String,

@@ -9,7 +9,7 @@ The input DAG must be in yaml format, as in the [autoware_dags](https://github.c
 
 ```
 $ cd picas_static_phase
-$ cargo run -- -d <DAG_DIR_PATH> -c <NUMBER_OF_CORES> -o <OUTPUT_DIR_PATH>
+$ cargo run --release -- -d <DAG_DIR_PATH> -c <NUMBER_OF_CORES> -o <OUTPUT_DIR_PATH>
 ```
 
 The details of each option are as follows:

@@ -1,9 +1,12 @@
 use crate::callback::{Callback, RegularCallback, TimerCallback};
 use crate::callback_group::CallbackGroup;
 use crate::chain::Chain;
+use petgraph::dot::{Config, Dot};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::fs;
+use std::fs::File;
+use std::io::Write;
 use std::rc::Rc;
 
 use crate::graph_extension::{GraphExtension, NodeData};
@@ -157,6 +160,7 @@ fn split_dag_into_chains_core(
     original_dag.remove_node(timer_index);
     let timer_node = dag.node_weight(timer_index).unwrap().clone();
     let timer_callback = Rc::new(RefCell::new(TimerCallback::new(
+        &timer_node.name,
         timer_node.wcet,
         dag_period,
     )));
@@ -168,7 +172,7 @@ fn split_dag_into_chains_core(
     // Create regular callbacks
     for node_i in critical_path.iter() {
         let node = &dag[*node_i];
-        let regular = Rc::new(RefCell::new(RegularCallback::new(node.wcet)));
+        let regular = Rc::new(RefCell::new(RegularCallback::new(&node.name, node.wcet)));
         regular_callbacks.push(regular.clone());
         callback_groups
             .entry(node.callback_group_id.clone())
@@ -205,14 +209,58 @@ pub fn parse_dags(dir_path: &str) -> (Vec<RefCell<CallbackGroup>>, Vec<Chain>) {
     let (mut perception_cbgs, mut perception_chains) =
         split_dag_into_chains(&mut perception_dag, &mut current_chain_priority);
 
+    #[cfg(debug_assertions)]
+    {
+        for (i, chain) in perception_chains.iter().enumerate() {
+            export_chain_to_dot(chain, &format!("{dir_path}/perception_chain_{i}.dot"));
+        }
+    }
+
     let mut sensing_localization_dag =
         create_dag_from_yaml(&format!("{dir_path}/sensing_localization.yaml"));
     let (mut sl_cbgs, mut sl_chains) =
         split_dag_into_chains(&mut sensing_localization_dag, &mut current_chain_priority);
 
+    #[cfg(debug_assertions)]
+    {
+        for (i, chain) in sl_chains.iter().enumerate() {
+            export_chain_to_dot(
+                chain,
+                &format!("{dir_path}/sensing_localization_chain_{i}.dot"),
+            );
+        }
+    }
+
     perception_cbgs.append(&mut sl_cbgs);
     perception_chains.append(&mut sl_chains);
     (perception_cbgs, perception_chains)
+}
+
+#[cfg(debug_assertions)]
+fn export_chain_to_dot(chain: &Chain, file_path: &str) {
+    let mut dag = Graph::<NodeData, i32>::new();
+    dag.add_node(NodeData::new(
+        0,
+        chain.head_timer_callback.borrow().name.as_str(),
+        "dummy",
+        0,
+        Some(chain.head_timer_callback.borrow().period),
+    ));
+    for regular in &chain.regular_callbacks {
+        let node_i = dag.add_node(NodeData::new(
+            0,
+            regular.borrow().name.as_str(),
+            "dummy",
+            0,
+            None,
+        ));
+        dag.add_edge(NodeIndex::new(node_i.index() - 1), node_i, 0);
+    }
+
+    let output = format!("{:?}", Dot::with_config(&dag, &[Config::EdgeNoLabel]));
+    let mut file = File::create(file_path).expect("Failed to create file");
+    file.write_all(output.as_bytes())
+        .expect("Failed to write to file");
 }
 
 #[cfg(test)]
