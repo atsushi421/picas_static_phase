@@ -1,12 +1,9 @@
 use crate::callback::{Callback, RegularCallback, TimerCallback};
 use crate::callback_group::CallbackGroup;
 use crate::chain::Chain;
-use petgraph::dot::{Config, Dot};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::fs::File;
-use std::io::Write;
 use std::rc::Rc;
 
 use crate::graph_extension::{GraphExtension, NodeData};
