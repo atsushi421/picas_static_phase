@@ -212,7 +212,7 @@ pub fn parse_dags(dir_path: &str) -> (Vec<RefCell<CallbackGroup>>, Vec<Chain>) {
     #[cfg(debug_assertions)]
     {
         for (i, chain) in perception_chains.iter().enumerate() {
-            export_chain_to_dot(chain, &format!("{dir_path}/perception_chain_{i}.dot"));
+            export_chain::export_chain_to_dot(chain, &format!("{dir_path}/perception_chain_{i}.dot"));
         }
     }
 
@@ -224,7 +224,7 @@ pub fn parse_dags(dir_path: &str) -> (Vec<RefCell<CallbackGroup>>, Vec<Chain>) {
     #[cfg(debug_assertions)]
     {
         for (i, chain) in sl_chains.iter().enumerate() {
-            export_chain_to_dot(
+            export_chain::export_chain_to_dot(
                 chain,
                 &format!("{dir_path}/sensing_localization_chain_{i}.dot"),
             );
@@ -237,31 +237,40 @@ pub fn parse_dags(dir_path: &str) -> (Vec<RefCell<CallbackGroup>>, Vec<Chain>) {
 }
 
 #[cfg(debug_assertions)]
-fn export_chain_to_dot(chain: &Chain, file_path: &str) {
-    let mut dag = Graph::<NodeData, i32>::new();
-    dag.add_node(NodeData::new(
-        0,
-        chain.head_timer_callback.borrow().name.as_str(),
-        "dummy",
-        0,
-        Some(chain.head_timer_callback.borrow().period),
-    ));
-    for regular in &chain.regular_callbacks {
-        let node_i = dag.add_node(NodeData::new(
+mod export_chain {
+    use super::*;
+    use petgraph::dot::{Config, Dot};
+    use std::fs::File;
+    use std::io::Write;
+    
+    pub fn export_chain_to_dot(chain: &Chain, file_path: &str) {
+        let mut dag = Graph::<NodeData, i32>::new();
+        dag.add_node(NodeData::new(
             0,
-            regular.borrow().name.as_str(),
+            chain.head_timer_callback.borrow().name.as_str(),
             "dummy",
             0,
-            None,
+            Some(chain.head_timer_callback.borrow().period),
         ));
-        dag.add_edge(NodeIndex::new(node_i.index() - 1), node_i, 0);
+        for regular in &chain.regular_callbacks {
+            let node_i = dag.add_node(NodeData::new(
+                0,
+                regular.borrow().name.as_str(),
+                "dummy",
+                0,
+                None,
+            ));
+            dag.add_edge(NodeIndex::new(node_i.index() - 1), node_i, 0);
+        }
+    
+        let output = format!("{:?}", Dot::with_config(&dag, &[Config::EdgeNoLabel]));
+        let mut file = File::create(file_path).expect("Failed to create file");
+        file.write_all(output.as_bytes())
+            .expect("Failed to write to file");
     }
-
-    let output = format!("{:?}", Dot::with_config(&dag, &[Config::EdgeNoLabel]));
-    let mut file = File::create(file_path).expect("Failed to create file");
-    file.write_all(output.as_bytes())
-        .expect("Failed to write to file");
 }
+
+
 
 #[cfg(test)]
 mod tests {
