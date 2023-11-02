@@ -31,7 +31,7 @@ fn main() {
     let (mut callback_groups, mut chains) = parse_dags(&arg.dag_dir_path);
     let mut executors = Vec::with_capacity(MAX_EXECUTORS);
     for i in 0..MAX_EXECUTORS {
-        executors.push(RefCell::new(Executor::new(i as i32)));
+        executors.push(RefCell::new(Executor::new(i as i32 + 1)));  // SCHED_FIFO priorities start at 1
     }
     let mut cores = Vec::with_capacity(arg.number_of_cores);
     for i in 0..arg.number_of_cores {
