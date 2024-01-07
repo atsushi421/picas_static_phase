@@ -5,6 +5,9 @@ This tool reproduces the priority and affinity settings of the PiCAS framework [
 ## Input DAG file format
 The input DAG must be in yaml format, as in the [autoware_dags](https://github.com/atsushi421/picas_static_phase/tree/main/autoware_dags) directory. [autoware_dags/visualize_dag.py](https://github.com/atsushi421/picas_static_phase/tree/main/autoware_dags/visualize_dag.py) is a visualization script to check the correctness of DAG yaml files.
 
+> [!NOTE]
+> The `callback_group_id` of each node should correspond to the `id` in template.yaml generated in [ros2_thread_configurator](https://github.com/sykwer/ros2_thread_configurator) prerun mode.
+
 ## Usage
 
 ```
