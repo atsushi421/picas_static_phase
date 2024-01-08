@@ -1,0 +1,49 @@
+nodes:
+- id: 0
+  name: crop_box_filter_measurement_range
+  callback_group_id: /localization/util/crop_box_filter_measurement_range@Subscription(/parameter_events)@Subscription(/sensing/lidar/top/outlier_filtered/pointcloud)@Service(/localization/util/crop_box_filter_measurement_range/get_parameters)@Service(/localization/util/crop_box_filter_measurement_range/get_parameter_types)@Service(/localization/util/crop_box_filter_measurement_range/set_parameters)@Service(/localization/util/crop_box_filter_measurement_range/set_parameters_atomically)@Service(/localization/util/crop_box_filter_measurement_range/describe_parameters)@Service(/localization/util/crop_box_filter_measurement_range/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 1
+  name: voxel_grid_downsample_filter
+  callback_group_id: /localization/util/voxel_grid_downsample_filter@Subscription(/parameter_events)@Subscription(/localization/util/measurement_range/pointcloud)@Service(/localization/util/voxel_grid_downsample_filter/get_parameters)@Service(/localization/util/voxel_grid_downsample_filter/get_parameter_types)@Service(/localization/util/voxel_grid_downsample_filter/set_parameters)@Service(/localization/util/voxel_grid_downsample_filter/set_parameters_atomically)@Service(/localization/util/voxel_grid_downsample_filter/describe_parameters)@Service(/localization/util/voxel_grid_downsample_filter/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 2
+  name: random_downsample_filter
+  callback_group_id: /localization/util/random_downsample_filter@Subscription(/parameter_events)@Subscription(/localization/util/voxel_grid_downsample/pointcloud)@Service(/localization/util/random_downsample_filter/get_parameters)@Service(/localization/util/random_downsample_filter/get_parameter_types)@Service(/localization/util/random_downsample_filter/set_parameters)@Service(/localization/util/random_downsample_filter/set_parameters_atomically)@Service(/localization/util/random_downsample_filter/describe_parameters)@Service(/localization/util/random_downsample_filter/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 3
+  name: ndt_scan_matcher
+  callback_group_id: /localization/pose_estimator/ndt_scan_matcher@Subscription(/localization/util/downsample/pointcloud)@Service(/localization/pose_estimator/ndt_align_srv)@Service(/localization/pose_estimator/trigger_node)@Waitable
+  wcet: -1
+
+- id: 4
+  name: ekf_localizer0
+  callback_group_id: /localization/pose_twist_fusion_filter/ekf_localizer@Subscription(/localization/pose_estimator/pose_with_covariance)@Waitable
+  wcet: -1
+
+- id: 5
+  name: ekf_localizer1
+  callback_group_id: /localization/pose_twist_fusion_filter/ekf_localizer@Subscription(/localization/twist_estimator/twist_with_covariance)@Waitable
+  wcet: -1
+
+- id: 6
+  name: ekf_localizer2
+  callback_group_id: /localization/pose_twist_fusion_filter/ekf_localizer@Subscription(/parameter_events)@Subscription(/initialpose3d)@Service(/localization/pose_twist_fusion_filter/ekf_localizer/get_parameters)@Service(/localization/pose_twist_fusion_filter/ekf_localizer/get_parameter_types)@Service(/localization/pose_twist_fusion_filter/ekf_localizer/set_parameters)@Service(/localization/pose_twist_fusion_filter/ekf_localizer/set_parameters_atomically)@Service(/localization/pose_twist_fusion_filter/ekf_localizer/describe_parameters)@Service(/localization/pose_twist_fusion_filter/ekf_localizer/list_parameters)@Service(/localization/pose_twist_fusion_filter/trigger_node)@Timer(20000000)@Timer(20000000)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+links:
+- source: 0
+  target: 1
+- source: 1
+  target: 2
+- source: 2
+  target: 3
+- source: 3
+  target: 4
+- source: 4
+  target: 5
+- source: 5
+  target: 6

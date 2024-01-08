@@ -1,120 +1,207 @@
 nodes:
+
+# =============================================================================
+# Perception (Critical Path)
+# =============================================================================
+
 - id: 0
-  name: concat_data
-  callback_group_id: cbg0
-  wcet: 3
-  period: 100
+  name: concatenate_data
+  callback_group_id: /sensing/lidar/concatenate_data@Subscription(/parameter_events)@Subscription(/sensing/lidar/top/outlier_filtered/pointcloud)@Subscription(/sensing/lidar/left/outlier_filtered/pointcloud)@Subscription(/sensing/lidar/right/outlier_filtered/pointcloud)@Subscription(/sensing/lidar/rear/outlier_filtered/pointcloud)@Subscription(/sensing/vehicle_velocity_converter/twist_with_covariance)@Service(/sensing/lidar/concatenate_data/get_parameters)@Service(/sensing/lidar/concatenate_data/get_parameter_types)@Service(/sensing/lidar/concatenate_data/set_parameters)@Service(/sensing/lidar/concatenate_data/set_parameters_atomically)@Service(/sensing/lidar/concatenate_data/describe_parameters)@Service(/sensing/lidar/concatenate_data/list_parameters)@Timer(1000000000)@Timer(95000000)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
 - id: 1
   name: crop_box_filter
-  callback_group_id: cbg1
-  wcet: 7
+  callback_group_id: /perception/obstacle_segmentation/crop_box_filter@Subscription(/parameter_events)@Subscription(/sensing/lidar/concatenated/pointcloud)@Service(/perception/obstacle_segmentation/crop_box_filter/get_parameters)@Service(/perception/obstacle_segmentation/crop_box_filter/get_parameter_types)@Service(/perception/obstacle_segmentation/crop_box_filter/set_parameters)@Service(/perception/obstacle_segmentation/crop_box_filter/set_parameters_atomically)@Service(/perception/obstacle_segmentation/crop_box_filter/describe_parameters)@Service(/perception/obstacle_segmentation/crop_box_filter/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
 - id: 2
   name: common_ground_filter
-  callback_group_id: cbg2
-  wcet: 68
+  callback_group_id: /perception/obstacle_segmentation/common_ground_filter@Subscription(/parameter_events)@Subscription(/perception/obstacle_segmentation/range_cropped/pointcloud)@Service(/perception/obstacle_segmentation/common_ground_filter/get_parameters)@Service(/perception/obstacle_segmentation/common_ground_filter/get_parameter_types)@Service(/perception/obstacle_segmentation/common_ground_filter/set_parameters)@Service(/perception/obstacle_segmentation/common_ground_filter/set_parameters_atomically)@Service(/perception/obstacle_segmentation/common_ground_filter/describe_parameters)@Service(/perception/obstacle_segmentation/common_ground_filter/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
 - id: 3
-  name: lidar_center_point
-  callback_group_id: cbg3
-  wcet: 78
-- id: 4
   name: occupancy_grid_map_node
-  callback_group_id: cbg4
-  wcet: 62
-- id: 5
+  callback_group_id: /perception/occupancy_grid_map/occupancy_grid_map_node@Subscription(/parameter_events)@Subscription(/perception/obstacle_segmentation/single_frame/pointcloud_raw)@Subscription(/sensing/lidar/concatenated/pointcloud)@Service(/perception/occupancy_grid_map/occupancy_grid_map_node/get_parameters)@Service(/perception/occupancy_grid_map/occupancy_grid_map_node/get_parameter_types)@Service(/perception/occupancy_grid_map/occupancy_grid_map_node/set_parameters)@Service(/perception/occupancy_grid_map/occupancy_grid_map_node/set_parameters_atomically)@Service(/perception/occupancy_grid_map/occupancy_grid_map_node/describe_parameters)@Service(/perception/occupancy_grid_map/occupancy_grid_map_node/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 4
   name: occupancy_grid_map_outlier_filter
-  callback_group_id: cbg5
-  wcet: 35
-- id: 6
+  callback_group_id: /perception/obstacle_segmentation/occupancy_grid_map_outlier_filter@Subscription(/parameter_events)@Subscription(/perception/obstacle_segmentation/single_frame/pointcloud_raw)@Subscription(/perception/occupancy_grid_map/map)@Service(/perception/obstacle_segmentation/occupancy_grid_map_outlier_filter/get_parameters)@Service(/perception/obstacle_segmentation/occupancy_grid_map_outlier_filter/get_parameter_types)@Service(/perception/obstacle_segmentation/occupancy_grid_map_outlier_filter/set_parameters)@Service(/perception/obstacle_segmentation/occupancy_grid_map_outlier_filter/set_parameters_atomically)@Service(/perception/obstacle_segmentation/occupancy_grid_map_outlier_filter/describe_parameters)@Service(/perception/obstacle_segmentation/occupancy_grid_map_outlier_filter/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 5
   name: voxel_grid_downsample_filter
-  callback_group_id: cbg6
-  wcet: 69
-- id: 7
+  callback_group_id: /perception/object_recognition/detection/voxel_grid_downsample_filter@Subscription(/parameter_events)@Subscription(/perception/obstacle_segmentation/pointcloud)@Service(/perception/object_recognition/detection/voxel_grid_downsample_filter/get_parameters)@Service(/perception/object_recognition/detection/voxel_grid_downsample_filter/get_parameter_types)@Service(/perception/object_recognition/detection/voxel_grid_downsample_filter/set_parameters)@Service(/perception/object_recognition/detection/voxel_grid_downsample_filter/set_parameters_atomically)@Service(/perception/object_recognition/detection/voxel_grid_downsample_filter/describe_parameters)@Service(/perception/object_recognition/detection/voxel_grid_downsample_filter/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 6
   name: voxel_based_compare_map_filter
-  callback_group_id: cbg7
-  wcet: 46
+  callback_group_id: /perception/object_recognition/detection/voxel_based_compare_map_filter@Subscription(/parameter_events)@Subscription(/perception/obstacle_segmentation/pointcloud_map_filtered/downsampled/pointcloud)@Service(/perception/object_recognition/detection/voxel_based_compare_map_filter/get_parameters)@Service(/perception/object_recognition/detection/voxel_based_compare_map_filter/get_parameter_types)@Service(/perception/object_recognition/detection/voxel_based_compare_map_filter/set_parameters)@Service(/perception/object_recognition/detection/voxel_based_compare_map_filter/set_parameters_atomically)@Service(/perception/object_recognition/detection/voxel_based_compare_map_filter/describe_parameters)@Service(/perception/object_recognition/detection/voxel_based_compare_map_filter/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 7
+  name: low_height_crop_box_filter
+  callback_group_id: /perception/object_recognition/detection/clustering/low_height_crop_box_filter@Subscription(/parameter_events)@Subscription(/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud)@Service(/perception/object_recognition/detection/clustering/low_height_crop_box_filter/get_parameters)@Service(/perception/object_recognition/detection/clustering/low_height_crop_box_filter/get_parameter_types)@Service(/perception/object_recognition/detection/clustering/low_height_crop_box_filter/set_parameters)@Service(/perception/object_recognition/detection/clustering/low_height_crop_box_filter/set_parameters_atomically)@Service(/perception/object_recognition/detection/clustering/low_height_crop_box_filter/describe_parameters)@Service(/perception/object_recognition/detection/clustering/low_height_crop_box_filter/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
 - id: 8
-  name: obstacle_pointcloud_based_vallidator_node
-  callback_group_id: cbg8
-  wcet: 10  # not measured
-- id: 9
   name: euclidean_cluster
-  callback_group_id: cbg9
-  wcet: 14
+  callback_group_id: /perception/object_recognition/detection/clustering/euclidean_cluster@Subscription(/parameter_events)@Subscription(/perception/object_recognition/detection/clustering/low_height/pointcloud)@Service(/perception/object_recognition/detection/clustering/euclidean_cluster/get_parameters)@Service(/perception/object_recognition/detection/clustering/euclidean_cluster/get_parameter_types)@Service(/perception/object_recognition/detection/clustering/euclidean_cluster/set_parameters)@Service(/perception/object_recognition/detection/clustering/euclidean_cluster/set_parameters_atomically)@Service(/perception/object_recognition/detection/clustering/euclidean_cluster/describe_parameters)@Service(/perception/object_recognition/detection/clustering/euclidean_cluster/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 9
+  name: cluster_merger
+  callback_group_id: /perception/object_recognition/detection/clustering/cluster_merger@Subscription(/parameter_events)@Subscription(/perception/object_recognition/detection/clustering/euclidean_cluster/clusters)@Subscription(/perception/object_recognition/detection/clustering/roi_cluster/clusters)@Service(/perception/object_recognition/detection/clustering/cluster_merger/get_parameters)@Service(/perception/object_recognition/detection/clustering/cluster_merger/get_parameter_types)@Service(/perception/object_recognition/detection/clustering/cluster_merger/set_parameters)@Service(/perception/object_recognition/detection/clustering/cluster_merger/set_parameters_atomically)@Service(/perception/object_recognition/detection/clustering/cluster_merger/describe_parameters)@Service(/perception/object_recognition/detection/clustering/cluster_merger/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
 - id: 10
-  name: detected_object_feature_remover
-  callback_group_id: cbg10
-  wcet: 3
+  name: shape_estimation0
+  callback_group_id: /perception/object_recognition/detection/clustering/shape_estimation@Subscription(/parameter_events)@Subscription(/perception/object_recognition/detection/clustering/clusters)@Service(/perception/object_recognition/detection/clustering/shape_estimation/get_parameters)@Service(/perception/object_recognition/detection/clustering/shape_estimation/get_parameter_types)@Service(/perception/object_recognition/detection/clustering/shape_estimation/set_parameters)@Service(/perception/object_recognition/detection/clustering/shape_estimation/set_parameters_atomically)@Service(/perception/object_recognition/detection/clustering/shape_estimation/describe_parameters)@Service(/perception/object_recognition/detection/clustering/shape_estimation/list_parameters)@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
 - id: 11
-  name: shape_estimation
-  callback_group_id: cbg11
-  wcet: 5
-- id: 12
-  name: object_association_merger0
-  callback_group_id: cbg12
-  wcet: 10  # not measured
-- id: 13
   name: detection_by_tracker
-  callback_group_id: cbg13
-  wcet: 49
-- id: 14
+  callback_group_id: /perception/object_recognition/detection/detection_by_tracker/detection_by_tracker_node@Subscription(/perception/object_recognition/tracking/objects)@Waitable
+  wcet: -1
+
+- id: 12
   name: object_association_merger1
-  callback_group_id: cbg14
-  wcet: 10  # not measured
-- id: 15
+  callback_group_id: /perception/object_recognition/detection/object_association_merger1@Subscription(/parameter_events)@Subscription(/perception/object_recognition/detection/pointpainting_roi_cluster_fusion/objects)@Subscription(/perception/object_recognition/detection/detection_by_tracker/objects)@Service(/perception/object_recognition/detection/object_association_merger1/get_parameters)@Service(/perception/object_recognition/detection/object_association_merger1/get_parameter_types)@Service(/perception/object_recognition/detection/object_association_merger1/set_parameters)@Service(/perception/object_recognition/detection/object_association_merger1/set_parameters_atomically)@Service(/perception/object_recognition/detection/object_association_merger1/describe_parameters)@Service(/perception/object_recognition/detection/object_association_merger1/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 13
   name: object_lanelet_filter
-  callback_group_id: cbg15
-  wcet: 11
-- id: 16
+  callback_group_id: /perception/object_recognition/detection/object_lanelet_filter@Subscription(/parameter_events)@Subscription(/map/vector_map)@Subscription(/perception/object_recognition/detection/objects_before_filter)@Service(/perception/object_recognition/detection/object_lanelet_filter/get_parameters)@Service(/perception/object_recognition/detection/object_lanelet_filter/get_parameter_types)@Service(/perception/object_recognition/detection/object_lanelet_filter/set_parameters)@Service(/perception/object_recognition/detection/object_lanelet_filter/set_parameters_atomically)@Service(/perception/object_recognition/detection/object_lanelet_filter/describe_parameters)@Service(/perception/object_recognition/detection/object_lanelet_filter/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 14
   name: multi_object_tracker
-  callback_group_id: cbg16
-  wcet: 42
-- id: 17
+  callback_group_id: /perception/object_recognition/tracking/multi_object_tracker@Subscription(/parameter_events)@Subscription(/perception/object_recognition/detection/objects)@Service(/perception/object_recognition/tracking/multi_object_tracker/get_parameters)@Service(/perception/object_recognition/tracking/multi_object_tracker/get_parameter_types)@Service(/perception/object_recognition/tracking/multi_object_tracker/set_parameters)@Service(/perception/object_recognition/tracking/multi_object_tracker/set_parameters_atomically)@Service(/perception/object_recognition/tracking/multi_object_tracker/describe_parameters)@Service(/perception/object_recognition/tracking/multi_object_tracker/list_parameters)@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 15
+  name: decorative_tracker_merger
+  callback_group_id: /perception/object_recognition/tracking/decorative_tracker_merger@Subscription(/parameter_events)@Subscription(/perception/object_recognition/tracking/near_objects)@Subscription(/perception/object_recognition/tracking/radar/far_objects)@Service(/perception/object_recognition/tracking/decorative_tracker_merger/get_parameters)@Service(/perception/object_recognition/tracking/decorative_tracker_merger/get_parameter_types)@Service(/perception/object_recognition/tracking/decorative_tracker_merger/set_parameters)@Service(/perception/object_recognition/tracking/decorative_tracker_merger/set_parameters_atomically)@Service(/perception/object_recognition/tracking/decorative_tracker_merger/describe_parameters)@Service(/perception/object_recognition/tracking/decorative_tracker_merger/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 16
   name: map_based_prediction
-  callback_group_id: cbg17
-  wcet: 12
+  callback_group_id: /perception/object_recognition/prediction/map_based_prediction@Subscription(/parameter_events)@Subscription(/perception/object_recognition/tracking/objects)@Subscription(/map/vector_map)@Service(/perception/object_recognition/prediction/map_based_prediction/get_parameters)@Service(/perception/object_recognition/prediction/map_based_prediction/get_parameter_types)@Service(/perception/object_recognition/prediction/map_based_prediction/set_parameters)@Service(/perception/object_recognition/prediction/map_based_prediction/set_parameters_atomically)@Service(/perception/object_recognition/prediction/map_based_prediction/describe_parameters)@Service(/perception/object_recognition/prediction/map_based_prediction/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+# =============================================================================
+# Perception (Sub Path)
+# =============================================================================
+
+- id: 17
+  name: pointpainting
+  callback_group_id: /perception/object_recognition/detection/pointpainting/pointpainting@Subscription(/parameter_events)@Subscription(/sensing/camera/camera0/camera_info)@Subscription(/sensing/camera/camera1/camera_info)@Subscription(/sensing/camera/camera2/camera_info)@Subscription(/sensing/camera/camera3/camera_info)@Subscription(/sensing/camera/camera4/camera_info)@Subscription(/sensing/camera/camera5/camera_info)@Subscription(/perception/object_recognition/detection/rois0)@Subscription(/perception/object_recognition/detection/rois1)@Subscription(/perception/object_recognition/detection/rois2)@Subscription(/perception/object_recognition/detection/rois3)@Subscription(/perception/object_recognition/detection/rois4)@Subscription(/perception/object_recognition/detection/rois5)@Subscription(/sensing/lidar/concatenated/pointcloud)@Service(/perception/object_recognition/detection/pointpainting/pointpainting/get_parameters)@Service(/perception/object_recognition/detection/pointpainting/pointpainting/get_parameter_types)@Service(/perception/object_recognition/detection/pointpainting/pointpainting/set_parameters)@Service(/perception/object_recognition/detection/pointpainting/pointpainting/set_parameters_atomically)@Service(/perception/object_recognition/detection/pointpainting/pointpainting/describe_parameters)@Service(/perception/object_recognition/detection/pointpainting/pointpainting/list_parameters)@Timer(70000000)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 18
+  name: roi_detected_object_fusion
+  callback_group_id: /perception/object_recognition/detection/roi_detected_object_fusion@Subscription(/parameter_events)@Subscription(/sensing/camera/camera0/camera_info)@Subscription(/sensing/camera/camera1/camera_info)@Subscription(/sensing/camera/camera2/camera_info)@Subscription(/sensing/camera/camera3/camera_info)@Subscription(/sensing/camera/camera4/camera_info)@Subscription(/sensing/camera/camera5/camera_info)@Subscription(/perception/object_recognition/detection/rois0)@Subscription(/perception/object_recognition/detection/rois1)@Subscription(/perception/object_recognition/detection/rois2)@Subscription(/perception/object_recognition/detection/rois3)@Subscription(/perception/object_recognition/detection/rois4)@Subscription(/perception/object_recognition/detection/rois5)@Subscription(/perception/object_recognition/detection/pointpainting/objects)@Service(/perception/object_recognition/detection/roi_detected_object_fusion/get_parameters)@Service(/perception/object_recognition/detection/roi_detected_object_fusion/get_parameter_types)@Service(/perception/object_recognition/detection/roi_detected_object_fusion/set_parameters)@Service(/perception/object_recognition/detection/roi_detected_object_fusion/set_parameters_atomically)@Service(/perception/object_recognition/detection/roi_detected_object_fusion/describe_parameters)@Service(/perception/object_recognition/detection/roi_detected_object_fusion/list_parameters)@Timer(70000000)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 19
+  name: obstacle_pointcloud_based_validator_node
+  callback_group_id: /perception/object_recognition/detection/obstacle_pointcloud_based_validator_node@Subscription(/parameter_events)@Subscription(/perception/object_recognition/detection/pointpainting/roi_fusion/objects)@Subscription(/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud)@Service(/perception/object_recognition/detection/obstacle_pointcloud_based_validator_node/get_parameters)@Service(/perception/object_recognition/detection/obstacle_pointcloud_based_validator_node/get_parameter_types)@Service(/perception/object_recognition/detection/obstacle_pointcloud_based_validator_node/set_parameters)@Service(/perception/object_recognition/detection/obstacle_pointcloud_based_validator_node/set_parameters_atomically)@Service(/perception/object_recognition/detection/obstacle_pointcloud_based_validator_node/describe_parameters)@Service(/perception/object_recognition/detection/obstacle_pointcloud_based_validator_node/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 20
+  name: roi_pointcloud_fusion
+  callback_group_id: /perception/object_recognition/detection/clustering/roi_pointcloud_fusion@Subscription(/parameter_events)@Subscription(/sensing/camera/camera0/camera_info)@Subscription(/sensing/camera/camera1/camera_info)@Subscription(/sensing/camera/camera2/camera_info)@Subscription(/sensing/camera/camera3/camera_info)@Subscription(/sensing/camera/camera4/camera_info)@Subscription(/sensing/camera/camera5/camera_info)@Subscription(/perception/object_recognition/detection/rois0)@Subscription(/perception/object_recognition/detection/rois1)@Subscription(/perception/object_recognition/detection/rois2)@Subscription(/perception/object_recognition/detection/rois3)@Subscription(/perception/object_recognition/detection/rois4)@Subscription(/perception/object_recognition/detection/rois5)@Subscription(/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud)@Service(/perception/object_recognition/detection/clustering/roi_pointcloud_fusion/get_parameters)@Service(/perception/object_recognition/detection/clustering/roi_pointcloud_fusion/get_parameter_types)@Service(/perception/object_recognition/detection/clustering/roi_pointcloud_fusion/set_parameters)@Service(/perception/object_recognition/detection/clustering/roi_pointcloud_fusion/set_parameters_atomically)@Service(/perception/object_recognition/detection/clustering/roi_pointcloud_fusion/describe_parameters)@Service(/perception/object_recognition/detection/clustering/roi_pointcloud_fusion/list_parameters)@Timer(70000000)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 21
+  name: roi_cluster_fusion
+  callback_group_id: /perception/object_recognition/detection/clustering/camera_lidar_fusion/roi_cluster_fusion@Subscription(/parameter_events)@Subscription(/sensing/camera/camera0/camera_info)@Subscription(/sensing/camera/camera1/camera_info)@Subscription(/sensing/camera/camera2/camera_info)@Subscription(/sensing/camera/camera3/camera_info)@Subscription(/sensing/camera/camera4/camera_info)@Subscription(/sensing/camera/camera5/camera_info)@Subscription(/perception/object_recognition/detection/rois0)@Subscription(/perception/object_recognition/detection/rois1)@Subscription(/perception/object_recognition/detection/rois2)@Subscription(/perception/object_recognition/detection/rois3)@Subscription(/perception/object_recognition/detection/rois4)@Subscription(/perception/object_recognition/detection/rois5)@Subscription(/perception/object_recognition/detection/clustering/clusters)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/roi_cluster_fusion/get_parameters)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/roi_cluster_fusion/get_parameter_types)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/roi_cluster_fusion/set_parameters)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/roi_cluster_fusion/set_parameters_atomically)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/roi_cluster_fusion/describe_parameters)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/roi_cluster_fusion/list_parameters)@Timer(70000000)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 22
+  name: shape_estimation1
+  callback_group_id: /perception/object_recognition/detection/clustering/camera_lidar_fusion/shape_estimation@Subscription(/parameter_events)@Subscription(/perception/object_recognition/detection/clustering/camera_lidar_fusion/clusters)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/shape_estimation/get_parameters)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/shape_estimation/get_parameter_types)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/shape_estimation/set_parameters)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/shape_estimation/set_parameters_atomically)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/shape_estimation/describe_parameters)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/shape_estimation/list_parameters)@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 23
+  name: detected_object_feature_remover
+  callback_group_id: /perception/object_recognition/detection/clustering/camera_lidar_fusion/detected_object_feature_remover@Subscription(/parameter_events)@Subscription(/perception/object_recognition/detection/clustering/camera_lidar_fusion/objects_with_feature)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/detected_object_feature_remover/get_parameters)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/detected_object_feature_remover/get_parameter_types)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/detected_object_feature_remover/set_parameters)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/detected_object_feature_remover/set_parameters_atomically)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/detected_object_feature_remover/describe_parameters)@Service(/perception/object_recognition/detection/clustering/camera_lidar_fusion/detected_object_feature_remover/list_parameters)@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 24
+  name: object_association_merger0
+  callback_group_id: /perception/object_recognition/detection/object_association_merger0@Subscription(/parameter_events)@Subscription(/perception/object_recognition/detection/pointpainting/validation/objects)@Subscription(/perception/object_recognition/detection/clustering/camera_lidar_fusion/objects)@Service(/perception/object_recognition/detection/object_association_merger0/get_parameters)@Service(/perception/object_recognition/detection/object_association_merger0/get_parameter_types)@Service(/perception/object_recognition/detection/object_association_merger0/set_parameters)@Service(/perception/object_recognition/detection/object_association_merger0/set_parameters_atomically)@Service(/perception/object_recognition/detection/object_association_merger0/describe_parameters)@Service(/perception/object_recognition/detection/object_association_merger0/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
 
 links:
+
+# =============================================================================
+# Perception (Critical Path)
+# =============================================================================
+
 - source: 0
   target: 1
-- source: 0
-  target: 3
-- source: 0
-  target: 4
 - source: 1
   target: 2
 - source: 2
+  target: 3
+- source: 3
   target: 4
-- source: 2
-  target: 5
 - source: 4
   target: 5
 - source: 5
   target: 6
 - source: 6
   target: 7
-- source: 3
-  target: 8
 - source: 7
   target: 8
-- source: 7
+- source: 8
   target: 9
 - source: 9
-  target: 11
-- source: 11
   target: 10
 - source: 10
-  target: 12
-- source: 8
-  target: 12
+  target: 11
 - source: 11
-  target: 13
+  target: 12
 - source: 12
-  target: 14
+  target: 13
 - source: 13
   target: 14
 - source: 14
   target: 15
 - source: 15
   target: 16
-- source: 16
+
+# =============================================================================
+# Perception (Sub Path)
+# =============================================================================
+
+- source: 0
+  target: 3
+- source: 2
+  target: 4
+- source: 0
   target: 17
+- source: 17
+  target: 18
+- source: 18
+  target: 19
+- source: 6
+  target: 19
+- source: 6
+  target: 20
+- source: 20
+  target: 9
+- source: 9
+  target: 21
+- source: 21
+  target: 22
+- source: 22
+  target: 23
+- source: 23
+  target: 24
+- source: 19
+  target: 24
+- source: 24
+  target: 12

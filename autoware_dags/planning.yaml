@@ -1,0 +1,63 @@
+nodes:
+- id: 0
+  name: behavior_path_planner
+  callback_group_id: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner@Subscription(/parameter_events)@Service(/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/get_parameters)@Service(/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/get_parameter_types)@Service(/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/set_parameters)@Service(/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/set_parameters_atomically)@Service(/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/describe_parameters)@Service(/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/list_parameters)@Timer(100000000)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 1
+  name: behavior_velocity_planner
+  callback_group_id: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner@Subscription(/planning/scenario_planning/lane_driving/behavior_planning/path_with_lane_id)@Waitable
+  wcet: -1
+
+- id: 2
+  name: elastic_band_smoother
+  callback_group_id: /planning/scenario_planning/lane_driving/motion_planning/elastic_band_smoother@Subscription(/parameter_events)@Subscription(/planning/scenario_planning/lane_driving/behavior_planning/path)@Subscription(/localization/kinematic_state)@Service(/planning/scenario_planning/lane_driving/motion_planning/elastic_band_smoother/get_parameters)@Service(/planning/scenario_planning/lane_driving/motion_planning/elastic_band_smoother/get_parameter_types)@Service(/planning/scenario_planning/lane_driving/motion_planning/elastic_band_smoother/set_parameters)@Service(/planning/scenario_planning/lane_driving/motion_planning/elastic_band_smoother/set_parameters_atomically)@Service(/planning/scenario_planning/lane_driving/motion_planning/elastic_band_smoother/describe_parameters)@Service(/planning/scenario_planning/lane_driving/motion_planning/elastic_band_smoother/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 3
+  name: obstacle_avoidance_planner
+  callback_group_id: /planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner@Subscription(/parameter_events)@Subscription(/planning/scenario_planning/lane_driving/motion_planning/path_smoother/path)@Subscription(/localization/kinematic_state)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/get_parameters)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/get_parameter_types)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/set_parameters)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/set_parameters_atomically)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/describe_parameters)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 4
+  name: obstacle_velocity_limiter
+  callback_group_id: /planning/scenario_planning/lane_driving/motion_planning/obstacle_velocity_limiter@Subscription(/parameter_events)@Subscription(/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/trajectory)@Subscription(/perception/occupancy_grid_map/map)@Subscription(/perception/obstacle_segmentation/pointcloud)@Subscription(/perception/object_recognition/objects)@Subscription(/localization/kinematic_state)@Subscription(/map/vector_map)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_velocity_limiter/get_parameters)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_velocity_limiter/get_parameter_types)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_velocity_limiter/set_parameters)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_velocity_limiter/set_parameters_atomically)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_velocity_limiter/describe_parameters)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_velocity_limiter/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 5
+  name: obstacle_cruise_planner
+  callback_group_id: /planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner@Subscription(/parameter_events)@Subscription(/planning/scenario_planning/lane_driving/motion_planning/obstacle_velocity_limiter/trajectory)@Subscription(/perception/object_recognition/objects)@Subscription(/localization/kinematic_state)@Subscription(/localization/acceleration)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/get_parameters)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/get_parameter_types)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/set_parameters)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/set_parameters_atomically)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/describe_parameters)@Service(/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 6
+  name: scenario_selector
+  callback_group_id: /planning/scenario_planning/scenario_selector@Subscription(/parameter_events)@Subscription(/planning/scenario_planning/lane_driving/trajectory)@Subscription(/planning/scenario_planning/parking/trajectory)@Subscription(/map/vector_map)@Subscription(/planning/mission_planning/route)@Subscription(/localization/kinematic_state)@Subscription(/planning/scenario_planning/parking/is_completed)@Service(/planning/scenario_planning/scenario_selector/get_parameters)@Service(/planning/scenario_planning/scenario_selector/get_parameter_types)@Service(/planning/scenario_planning/scenario_selector/set_parameters)@Service(/planning/scenario_planning/scenario_selector/set_parameters_atomically)@Service(/planning/scenario_planning/scenario_selector/describe_parameters)@Service(/planning/scenario_planning/scenario_selector/list_parameters)@Timer(100000000)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 7
+  name: motion_velocity_smoother
+  callback_group_id: /planning/scenario_planning/motion_velocity_smoother@Subscription(/parameter_events)@Subscription(/planning/scenario_planning/scenario_selector/trajectory)@Subscription(/localization/kinematic_state)@Subscription(/planning/scenario_planning/max_velocity)@Subscription(/localization/acceleration)@Subscription(/system/operation_mode/state)@Service(/planning/scenario_planning/motion_velocity_smoother/get_parameters)@Service(/planning/scenario_planning/motion_velocity_smoother/get_parameter_types)@Service(/planning/scenario_planning/motion_velocity_smoother/set_parameters)@Service(/planning/scenario_planning/motion_velocity_smoother/set_parameters_atomically)@Service(/planning/scenario_planning/motion_velocity_smoother/describe_parameters)@Service(/planning/scenario_planning/motion_velocity_smoother/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 8
+  name: planning_validator
+  callback_group_id: /planning/planning_validator@Subscription(/parameter_events)@Subscription(/localization/kinematic_state)@Subscription(/planning/scenario_planning/motion_velocity_smoother/trajectory)@Service(/planning/planning_validator/get_parameters)@Service(/planning/planning_validator/get_parameter_types)@Service(/planning/planning_validator/set_parameters)@Service(/planning/planning_validator/set_parameters_atomically)@Service(/planning/planning_validator/describe_parameters)@Service(/planning/planning_validator/list_parameters)@Timer(1000000000)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+links:
+- source: 0
+  target: 1
+- source: 1
+  target: 2
+- source: 2
+  target: 3
+- source: 3
+  target: 4
+- source: 4
+  target: 5
+- source: 5
+  target: 6
+- source: 6
+  target: 7
+- source: 7
+  target: 8

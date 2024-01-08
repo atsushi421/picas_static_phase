@@ -1,0 +1,35 @@
+nodes:
+- id: 0
+  name: velodyne_convert_node
+  callback_group_id: /sensing/lidar/right/velodyne_convert_node@Subscription(/parameter_events)@Subscription(/sensing/lidar/right/velodyne_packets)@Service(/sensing/lidar/right/velodyne_convert_node/get_parameters)@Service(/sensing/lidar/right/velodyne_convert_node/get_parameter_types)@Service(/sensing/lidar/right/velodyne_convert_node/set_parameters)@Service(/sensing/lidar/right/velodyne_convert_node/set_parameters_atomically)@Service(/sensing/lidar/right/velodyne_convert_node/describe_parameters)@Service(/sensing/lidar/right/velodyne_convert_node/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 1
+  name: crop_box_filter_self
+  callback_group_id: /sensing/lidar/right/crop_box_filter_self@Subscription(/parameter_events)@Subscription(/sensing/lidar/right/pointcloud_raw_ex)@Service(/sensing/lidar/right/crop_box_filter_self/get_parameters)@Service(/sensing/lidar/right/crop_box_filter_self/get_parameter_types)@Service(/sensing/lidar/right/crop_box_filter_self/set_parameters)@Service(/sensing/lidar/right/crop_box_filter_self/set_parameters_atomically)@Service(/sensing/lidar/right/crop_box_filter_self/describe_parameters)@Service(/sensing/lidar/right/crop_box_filter_self/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 2
+  name: crop_box_filter_mirror
+  callback_group_id: /sensing/lidar/right/crop_box_filter_mirror@Subscription(/parameter_events)@Subscription(/sensing/lidar/right/self_cropped/pointcloud_ex)@Service(/sensing/lidar/right/crop_box_filter_mirror/get_parameters)@Service(/sensing/lidar/right/crop_box_filter_mirror/get_parameter_types)@Service(/sensing/lidar/right/crop_box_filter_mirror/set_parameters)@Service(/sensing/lidar/right/crop_box_filter_mirror/set_parameters_atomically)@Service(/sensing/lidar/right/crop_box_filter_mirror/describe_parameters)@Service(/sensing/lidar/right/crop_box_filter_mirror/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 3
+  name: distortion_corrector_node
+  callback_group_id: /sensing/lidar/right/distortion_corrector_node@Subscription(/parameter_events)@Subscription(/sensing/vehicle_velocity_converter/twist_with_covariance)@Subscription(/sensing/imu/imu_data)@Subscription(/sensing/lidar/right/mirror_cropped/pointcloud_ex)@Service(/sensing/lidar/right/distortion_corrector_node/get_parameters)@Service(/sensing/lidar/right/distortion_corrector_node/get_parameter_types)@Service(/sensing/lidar/right/distortion_corrector_node/set_parameters)@Service(/sensing/lidar/right/distortion_corrector_node/set_parameters_atomically)@Service(/sensing/lidar/right/distortion_corrector_node/describe_parameters)@Service(/sensing/lidar/right/distortion_corrector_node/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 4
+  name: ring_outlier_filter
+  callback_group_id: /sensing/lidar/right/ring_outlier_filter@Subscription(/parameter_events)@Subscription(/sensing/lidar/right/rectified/pointcloud_ex)@Service(/sensing/lidar/right/ring_outlier_filter/get_parameters)@Service(/sensing/lidar/right/ring_outlier_filter/get_parameter_types)@Service(/sensing/lidar/right/ring_outlier_filter/set_parameters)@Service(/sensing/lidar/right/ring_outlier_filter/set_parameters_atomically)@Service(/sensing/lidar/right/ring_outlier_filter/describe_parameters)@Service(/sensing/lidar/right/ring_outlier_filter/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+links:
+- source: 0
+  target: 1
+- source: 1
+  target: 2
+- source: 2
+  target: 3
+- source: 3
+  target: 4

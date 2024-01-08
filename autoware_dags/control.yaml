@@ -1,0 +1,28 @@
+nodes:
+- id: 0
+  name: trajectory_follower
+  callback_group_id: /control/trajectory_follower/controller_node_exe@Subscription(/parameter_events)@Subscription(/planning/scenario_planning/trajectory)@Subscription(/vehicle/status/steering_status)@Subscription(/localization/kinematic_state)@Subscription(/localization/acceleration)@Subscription(/system/operation_mode/state)@Service(/control/trajectory_follower/controller_node_exe/get_parameters)@Service(/control/trajectory_follower/controller_node_exe/get_parameter_types)@Service(/control/trajectory_follower/controller_node_exe/set_parameters)@Service(/control/trajectory_follower/controller_node_exe/set_parameters_atomically)@Service(/control/trajectory_follower/controller_node_exe/describe_parameters)@Service(/control/trajectory_follower/controller_node_exe/list_parameters)@Timer(1000000000)@Timer(30000000)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 1
+  name: vehicle_cmd_gate
+  callback_group_id: /control/vehicle_cmd_gate@Subscription(/parameter_events)@Subscription(/localization/kinematic_state)@Subscription(/external/selected/heartbeat)@Subscription(/control/gate_mode_cmd)@Subscription(/autoware/engage)@Subscription(/localization/kinematic_state)@Subscription(/localization/acceleration)@Subscription(/vehicle/status/steering_status)@Subscription(/system/operation_mode/state)@Subscription(/system/fail_safe/mrm_state)@Subscription(/control/trajectory_follower/control_cmd)@Subscription(/planning/turn_indicators_cmd)@Subscription(/planning/hazard_lights_cmd)@Subscription(/control/shift_decider/gear_cmd)@Subscription(/external/selected/control_cmd)@Subscription(/external/selected/turn_indicators_cmd)@Subscription(/external/selected/hazard_lights_cmd)@Subscription(/external/selected/gear_cmd)@Subscription(/system/emergency/control_cmd)@Subscription(/system/emergency/hazard_lights_cmd)@Subscription(/system/emergency/gear_cmd)@Service(/control/vehicle_cmd_gate/get_parameters)@Service(/control/vehicle_cmd_gate/get_parameter_types)@Service(/control/vehicle_cmd_gate/set_parameters)@Service(/control/vehicle_cmd_gate/set_parameters_atomically)@Service(/control/vehicle_cmd_gate/describe_parameters)@Service(/control/vehicle_cmd_gate/list_parameters)@Service(/api/autoware/set/engage)@Service(/api/autoware/set/emergency)@Service(/control/vehicle_cmd_gate/external_emergency_stop)@Service(/control/vehicle_cmd_gate/clear_external_emergency_stop)@Service(/control/vehicle_cmd_gate/set_pause)@Service(/control/vehicle_cmd_gate/set_stop)@Timer(100000000)@Timer(100000000)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 2
+  name: raw_vehicle_cmd_converter
+  callback_group_id: //raw_vehicle_cmd_converter@Subscription(/parameter_events)@Subscription(/control/command/control_cmd)@Subscription(/localization/kinematic_state)@Subscription(/vehicle/status/steering_status)@Service(/raw_vehicle_cmd_converter/get_parameters)@Service(/raw_vehicle_cmd_converter/get_parameter_types)@Service(/raw_vehicle_cmd_converter/set_parameters)@Service(/raw_vehicle_cmd_converter/set_parameters_atomically)@Service(/raw_vehicle_cmd_converter/describe_parameters)@Service(/raw_vehicle_cmd_converter/list_parameters)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+- id: 3
+  name: pacmod_interface
+  callback_group_id: //pacmod_interface@Subscription(/parameter_events)@Subscription(/control/command/control_cmd)@Subscription(/control/command/gear_cmd)@Subscription(/control/command/turn_indicators_cmd)@Subscription(/control/command/hazard_lights_cmd)@Subscription(/control/command/actuation_cmd)@Subscription(/control/command/emergency_cmd)@Subscription(/pacmod/rear_pass_door_rpt)@Subscription(/pacmod/steering_rpt)@Subscription(/pacmod/wheel_speed_rpt)@Subscription(/pacmod/accel_rpt)@Subscription(/pacmod/brake_rpt)@Subscription(/pacmod/shift_rpt)@Subscription(/pacmod/turn_rpt)@Subscription(/pacmod/global_rpt)@Service(/pacmod_interface/get_parameters)@Service(/pacmod_interface/get_parameter_types)@Service(/pacmod_interface/set_parameters)@Service(/pacmod_interface/set_parameters_atomically)@Service(/pacmod_interface/describe_parameters)@Service(/pacmod_interface/list_parameters)@Service(/control/control_mode_request)@Service(/api/vehicle/set/door)@Timer(33333333)@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable@Waitable
+  wcet: -1
+
+links:
+- source: 0
+  target: 1
+- source: 1
+  target: 2
+- source: 2
+  target: 3
