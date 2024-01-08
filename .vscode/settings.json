@@ -1,5 +1,0 @@
-{
-    "rust-analyzer.linkedProjects": [
-        "./picas_static_phase/picas_static_phase/picas_static_phase/Cargo.toml"
-    ]
-}

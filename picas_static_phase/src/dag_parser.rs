@@ -204,36 +204,72 @@ fn split_dag_into_chains_core(
 pub fn parse_dags(dir_path: &str) -> (Vec<RefCell<CallbackGroup>>, Vec<Chain>) {
     let mut current_chain_priority = 0;
 
-    // Perception has a higher priority than sensing and localization because it is positioned later.
+    // control -> planning -> perception -> localization -> sensing
+    // control
+    let mut control_dag = create_dag_from_yaml(&format!("{dir_path}/control.yaml"));
+    let (mut control_cbgs, mut control_chains) =
+        split_dag_into_chains(&mut control_dag, &mut current_chain_priority);
+
+    // planning
+    let mut planning_dag = create_dag_from_yaml(&format!("{dir_path}/planning.yaml"));
+    let (mut planning_cbgs, mut planning_chains) =
+        split_dag_into_chains(&mut planning_dag, &mut current_chain_priority);
+    control_cbgs.append(&mut planning_cbgs);
+    control_chains.append(&mut planning_chains);
+
+    // perception
     let mut perception_dag = create_dag_from_yaml(&format!("{dir_path}/perception.yaml"));
     let (mut perception_cbgs, mut perception_chains) =
         split_dag_into_chains(&mut perception_dag, &mut current_chain_priority);
+    control_cbgs.append(&mut perception_cbgs);
+    control_chains.append(&mut perception_chains);
 
     #[cfg(debug_assertions)]
     {
         for (i, chain) in perception_chains.iter().enumerate() {
-            export_chain::export_chain_to_dot(chain, &format!("{dir_path}/perception_chain_{i}.dot"));
-        }
-    }
-
-    let mut sensing_localization_dag =
-        create_dag_from_yaml(&format!("{dir_path}/sensing_localization.yaml"));
-    let (mut sl_cbgs, mut sl_chains) =
-        split_dag_into_chains(&mut sensing_localization_dag, &mut current_chain_priority);
-
-    #[cfg(debug_assertions)]
-    {
-        for (i, chain) in sl_chains.iter().enumerate() {
             export_chain::export_chain_to_dot(
                 chain,
-                &format!("{dir_path}/sensing_localization_chain_{i}.dot"),
+                &format!("{dir_path}/perception_chain_{i}.dot"),
             );
         }
     }
 
-    perception_cbgs.append(&mut sl_cbgs);
-    perception_chains.append(&mut sl_chains);
-    (perception_cbgs, perception_chains)
+    // localization
+    let mut localization_dag = create_dag_from_yaml(&format!("{dir_path}/localization.yaml"));
+    let (mut localization_cbgs, mut localization_chains) =
+        split_dag_into_chains(&mut localization_dag, &mut current_chain_priority);
+    control_cbgs.append(&mut localization_cbgs);
+    control_chains.append(&mut localization_chains);
+
+    // top lidar
+    let mut top_lidar_dag = create_dag_from_yaml(&format!("{dir_path}/top_lidar.yaml"));
+    let (mut top_lidar_cbgs, mut top_lidar_chains) =
+        split_dag_into_chains(&mut top_lidar_dag, &mut current_chain_priority);
+    control_cbgs.append(&mut top_lidar_cbgs);
+    control_chains.append(&mut top_lidar_chains);
+
+    // right lidar
+    let mut right_lidar_dag = create_dag_from_yaml(&format!("{dir_path}/right_lidar.yaml"));
+    let (mut right_lidar_cbgs, mut right_lidar_chains) =
+        split_dag_into_chains(&mut right_lidar_dag, &mut current_chain_priority);
+    control_cbgs.append(&mut right_lidar_cbgs);
+    control_chains.append(&mut right_lidar_chains);
+
+    // left lidar
+    let mut left_lidar_dag = create_dag_from_yaml(&format!("{dir_path}/left_lidar.yaml"));
+    let (mut left_lidar_cbgs, mut left_lidar_chains) =
+        split_dag_into_chains(&mut left_lidar_dag, &mut current_chain_priority);
+    control_cbgs.append(&mut left_lidar_cbgs);
+    control_chains.append(&mut left_lidar_chains);
+
+    // rear lidar
+    let mut rear_lidar_dag = create_dag_from_yaml(&format!("{dir_path}/rear_lidar.yaml"));
+    let (mut rear_lidar_cbgs, mut rear_lidar_chains) =
+        split_dag_into_chains(&mut rear_lidar_dag, &mut current_chain_priority);
+    control_cbgs.append(&mut rear_lidar_cbgs);
+    control_chains.append(&mut rear_lidar_chains);
+
+    (control_cbgs, control_chains)
 }
 
 #[cfg(debug_assertions)]
@@ -242,7 +278,7 @@ mod export_chain {
     use petgraph::dot::{Config, Dot};
     use std::fs::File;
     use std::io::Write;
-    
+
     pub fn export_chain_to_dot(chain: &Chain, file_path: &str) {
         let mut dag = Graph::<NodeData, i32>::new();
         dag.add_node(NodeData::new(
@@ -262,15 +298,13 @@ mod export_chain {
             ));
             dag.add_edge(NodeIndex::new(node_i.index() - 1), node_i, 0);
         }
-    
+
         let output = format!("{:?}", Dot::with_config(&dag, &[Config::EdgeNoLabel]));
         let mut file = File::create(file_path).expect("Failed to create file");
         file.write_all(output.as_bytes())
             .expect("Failed to write to file");
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {
